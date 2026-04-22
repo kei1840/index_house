@@ -145,6 +145,42 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 .chart-wrap.h240 { height: 240px; }
 .chart-wrap.h200 { height: 200px; }
 
+/* INSIGHTS */
+.insights-card {
+  grid-column: 1 / -1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+.insight-item {
+  padding: 0.75rem 1rem;
+  background: var(--surface2);
+  border-radius: 7px;
+  border-left: 3px solid var(--border);
+}
+.insight-item.up { border-left-color: #f06292; }
+.insight-item.dn { border-left-color: var(--accent-water); }
+.insight-item.neutral { border-left-color: var(--accent-settle); }
+.insight-label {
+  font-family: var(--mono); font-size: 0.62rem;
+  color: var(--muted); letter-spacing: .06em; text-transform: uppercase;
+  margin-bottom: 0.3rem;
+}
+.insight-val {
+  font-family: var(--mono); font-size: 0.92rem; font-weight: 500;
+  color: var(--text); margin-bottom: 0.2rem;
+}
+.insight-sub {
+  font-family: var(--mono); font-size: 0.62rem; color: var(--muted);
+}
+
 /* EDIT PANEL */
 .edit-panel {
   grid-column: 1 / -1;
@@ -394,6 +430,12 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
     </div>
   </div>
 
+  <!-- INSIGHTS -->
+  <div class="insights-card">
+    <div class="card-title">インサイト</div>
+    <div class="insights-grid" id="insightsGrid"></div>
+  </div>
+
   <!-- EDIT PANEL -->
   <div class="edit-panel">
     <div class="edit-header">
@@ -448,12 +490,13 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <div class="val" id="prev-kei">—</div>
       </div>
       <div class="settle-item">
-        <label>差額</label>
+        <label>差額 (Miz−Kei)</label>
         <div class="val" id="prev-diff">—</div>
       </div>
-      <div class="settle-item">
-        <label>父母支払分込み精算</label>
+      <div class="settle-item" style="border-left:2px solid var(--accent-kei); padding-left:1rem; margin-left:0.5rem;">
+        <label>KeiがMizに渡す額</label>
         <div class="val settle-highlight" id="prev-settle">—</div>
+        <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-top:2px" id="prev-settle-note">—</div>
       </div>
     </div>
   </div>
@@ -725,6 +768,10 @@ function updatePreview() {
   document.getElementById('prev-kei').textContent = `¥${fmt(keiTotal)}`;
   document.getElementById('prev-diff').textContent = `¥${fmt(diff)}`;
   document.getElementById('prev-settle').textContent = `¥${fmt(settle)}`;
+  const afterMiz = mizTotal - settle;
+  const afterKei = keiTotal - d.par_pay + settle;
+  const noteEl = document.getElementById('prev-settle-note');
+  if (noteEl) noteEl.textContent = `精算後 → Miz ¥${fmt(afterMiz)} / Kei ¥${fmt(afterKei)}（均等化）`;
 }
 
 ['e_elec','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_net','e_miz_other','e_kei_other','e_par_comm','e_par_pay'].forEach(id => {
@@ -745,10 +792,98 @@ function saveMonth() {
   overrides[key] = obj;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e){}
 
-  updateMetrics(); updateTable(); initCharts();
+  updateMetrics(); updateTable(); initCharts(); updateInsights();
   const btn = document.getElementById('saveBtn');
   btn.textContent = '保存済み ✓'; btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '保存'; btn.classList.remove('saved'); }, 2000);
+}
+
+function updateInsights() {
+  const all = getAll();
+  const latest = all[all.length - 1];
+  const last12 = all.slice(-12);
+  const prev12 = all.slice(-24, -12);
+  const last3 = all.slice(-3);
+
+  const avg = (arr, fn) => arr.length ? Math.round(arr.reduce((s,d) => s + fn(d), 0) / arr.length) : 0;
+  const settle = d => calcSettle(d).settle;
+
+  // 前年同月比: 電気ガス
+  const prevSamePeriodElec = prev12.length ? avg(prev12, d => d.elec) : null;
+  const curAvgElec = avg(last12, d => d.elec);
+  const elecYoy = prevSamePeriodElec ? Math.round((curAvgElec - prevSamePeriodElec) / prevSamePeriodElec * 100) : null;
+
+  // 精算額トレンド: 直近3ヶ月平均 vs 12ヶ月平均
+  const avg3Settle = avg(last3, settle);
+  const avg12Settle = avg(last12, settle);
+  const settleDir = avg3Settle > avg12Settle ? 'up' : 'dn';
+
+  // 精算額の最高・最低（直近12ヶ月）
+  const sorted = [...last12].sort((a,b) => settle(b) - settle(a));
+  const maxSettle = sorted[0];
+  const minSettle = sorted[sorted.length - 1];
+
+  // 雑費トレンド
+  const curAvgFood = avg(last12, d => d.food);
+  const prevAvgFood = prev12.length ? avg(prev12, d => d.food) : null;
+  const foodYoy = prevAvgFood ? Math.round((curAvgFood - prevAvgFood) / prevAvgFood * 100) : null;
+
+  // 水道：有月のみ平均（直近12ヶ月）
+  const waterMonths = last12.filter(d => d.water > 0);
+  const avgWater = waterMonths.length ? avg(waterMonths, d => d.water) : 0;
+  const prevWaterMonths = prev12.filter(d => d.water > 0);
+  const prevAvgWater = prevWaterMonths.length ? avg(prevWaterMonths, d => d.water) : null;
+  const waterYoy = prevAvgWater ? Math.round((avgWater - prevAvgWater) / prevAvgWater * 100) : null;
+
+  const sign = v => v >= 0 ? `+${v}` : `${v}`;
+  const dirClass = v => v > 5 ? 'up' : v < -5 ? 'dn' : 'neutral';
+
+  const items = [
+    {
+      cls: elecYoy !== null ? dirClass(elecYoy) : 'neutral',
+      label: '電気ガス 前年比（12ヶ月平均）',
+      val: elecYoy !== null ? `${sign(elecYoy)}%` : '—',
+      sub: `直近12ヶ月平均 ¥${fmt(curAvgElec)}`
+    },
+    {
+      cls: foodYoy !== null ? dirClass(foodYoy) : 'neutral',
+      label: '雑費 前年比（12ヶ月平均）',
+      val: foodYoy !== null ? `${sign(foodYoy)}%` : '—',
+      sub: `直近12ヶ月平均 ¥${fmt(curAvgFood)}`
+    },
+    {
+      cls: waterYoy !== null ? dirClass(waterYoy) : 'neutral',
+      label: '水道 前年比（有月平均）',
+      val: waterYoy !== null ? `${sign(waterYoy)}%` : '—',
+      sub: `直近有月平均 ¥${fmt(avgWater)}`
+    },
+    {
+      cls: settleDir,
+      label: '精算額トレンド（直近3ヶ月 vs 12ヶ月平均）',
+      val: `¥${fmt(avg3Settle)}`,
+      sub: `12ヶ月平均 ¥${fmt(avg12Settle)}（${avg3Settle > avg12Settle ? '↑ 増加傾向' : '↓ 減少傾向'}）`
+    },
+    {
+      cls: 'up',
+      label: '精算額 最高月（直近12ヶ月）',
+      val: `¥${fmt(settle(maxSettle))}`,
+      sub: `${fmtLabel(maxSettle)}${maxSettle.memo ? ' ／ ' + maxSettle.memo : ''}`
+    },
+    {
+      cls: 'dn',
+      label: '精算額 最低月（直近12ヶ月）',
+      val: `¥${fmt(settle(minSettle))}`,
+      sub: `${fmtLabel(minSettle)}${minSettle.memo ? ' ／ ' + minSettle.memo : ''}`
+    },
+  ];
+
+  document.getElementById('insightsGrid').innerHTML = items.map(i => `
+    <div class="insight-item ${i.cls}">
+      <div class="insight-label">${i.label}</div>
+      <div class="insight-val">${i.val}</div>
+      <div class="insight-sub">${i.sub}</div>
+    </div>
+  `).join('');
 }
 
 function setupAdders() {
@@ -783,7 +918,7 @@ document.getElementById('lock-input').addEventListener('input', function() {
   if (this.value === '7130') {
     document.getElementById('lock').style.display = 'none';
     document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
-    setupEditDropdowns(); loadEdit(); updateMetrics(); updateTable(); initCharts(); setupAdders();
+    setupEditDropdowns(); loadEdit(); updateMetrics(); updateTable(); initCharts(); updateInsights(); setupAdders();
   } else if (this.value.length >= 4) {
     document.getElementById('lock-error').textContent = 'パスワードが違います';
     this.value = '';
