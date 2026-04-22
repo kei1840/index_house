@@ -225,6 +225,37 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
   text-align: right;
 }
 .field input:focus { outline: none; border-color: rgba(167,139,250,0.5); }
+.adder-row {
+  display: flex; gap: 4px; margin-top: 3px;
+}
+.adder-input {
+  flex: 1; min-width: 0;
+  font-family: var(--mono); font-size: 0.75rem;
+  padding: 3px 6px;
+  background: var(--bg);
+  border: 1px dashed rgba(107,79,216,0.3);
+  border-radius: 4px;
+  color: var(--muted);
+  text-align: right;
+}
+.adder-input:focus { outline: none; border-color: rgba(107,79,216,0.6); color: var(--text); }
+.adder-input::placeholder { color: rgba(138,138,150,0.5); font-size: 0.7rem; }
+.adder-btn {
+  font-family: var(--mono); font-size: 0.75rem; font-weight: 500;
+  padding: 3px 8px;
+  background: rgba(107,79,216,0.12);
+  border: 1px solid rgba(107,79,216,0.25);
+  border-radius: 4px;
+  color: var(--accent-settle);
+  cursor: pointer; line-height: 1;
+  transition: background 0.1s;
+}
+.adder-btn:hover { background: rgba(107,79,216,0.22); }
+.adder-sum {
+  font-family: var(--mono); font-size: 0.6rem;
+  color: rgba(107,79,216,0.6); text-align: right;
+  margin-top: 1px; min-height: 0.8rem;
+}
 
 .settle-preview {
   display: flex; align-items: center; gap: 2rem;
@@ -305,7 +336,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       <div class="metric-delta" id="m-water-delta"></div>
     </div>
     <div class="metric-card food">
-      <div class="metric-label">食費・日用品</div>
+      <div class="metric-label">雑費</div>
       <div class="metric-value" id="m-food">—<span>円</span></div>
       <div class="metric-sub" id="m-food-avg">12ヶ月平均 —</div>
       <div class="metric-delta" id="m-food-delta"></div>
@@ -336,21 +367,22 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 
   <!-- UTIL CHART -->
   <div class="card chart-util">
-    <div class="card-title">水道・電気ガス 推移</div>
+    <div class="card-title">水道・電気ガス・雑費 推移</div>
     <div class="legend-row">
       <span><span class="legend-dot" style="background:#1a6fc4"></span>電気ガス</span>
       <span><span class="legend-dot" style="background:#0d8f6a"></span>水道</span>
+      <span><span class="legend-dot" style="background:#c47a10"></span>雑費</span>
     </div>
     <div class="chart-wrap h240">
-      <canvas id="chartUtil" role="img" aria-label="水道・電気ガスの月次推移"></canvas>
+      <canvas id="chartUtil" role="img" aria-label="水道・電気ガス・雑費の月次推移"></canvas>
     </div>
   </div>
 
   <!-- FOOD CHART -->
   <div class="card chart-food">
-    <div class="card-title">食費 推移</div>
+    <div class="card-title">雑費 推移</div>
     <div class="chart-wrap h200">
-      <canvas id="chartFood" role="img" aria-label="食費の月次推移"></canvas>
+      <canvas id="chartFood" role="img" aria-label="雑費の月次推移"></canvas>
     </div>
   </div>
 
@@ -380,9 +412,9 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <div class="field"><label>水道 (Kei払)</label><input type="number" id="e_water" placeholder="0"></div>
       </div>
       <div>
-        <div class="edit-col-title">食費・家賃</div>
-        <div class="field"><label>食費・日用品 (Kei払)</label><input type="number" id="e_food" placeholder="0"></div>
-        <div class="field"><label>食費・父母分</label><input type="number" id="e_food_par" placeholder="0"></div>
+        <div class="edit-col-title">雑費・家賃</div>
+        <div class="field"><label>雑費 (Kei払)</label><input type="number" id="e_food" placeholder="0"></div>
+        <div class="field"><label>食費（父母）</label><input type="number" id="e_food_par" placeholder="0"></div>
         <div class="field"><label>家賃 (Miz払)</label><input type="number" id="e_rent" placeholder="150000"></div>
       </div>
       <div>
@@ -397,7 +429,8 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <div class="field"><label>ネット (Miz払)</label><input type="number" id="e_net" placeholder="6000"></div>
         <div class="field"><label>Miz臨時</label><input type="number" id="e_miz_other" placeholder="0"></div>
         <div class="field"><label>Kei臨時</label><input type="number" id="e_kei_other" placeholder="0"></div>
-        <div class="field"><label>父母支払分 (手入力)</label><input type="number" id="e_par_pay" placeholder="120000"></div>
+        <div class="field"><label>電話・新聞（父母）Kei払</label><input type="number" id="e_par_comm" placeholder="10000"></div>
+        <div class="field"><label>父母支払分 (手入力)</label><input type="number" id="e_par_pay" placeholder="130000"></div>
       </div>
       <div>
         <div class="edit-col-title">備考</div>
@@ -434,7 +467,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
           <th>月</th>
           <th>電気ガス</th>
           <th>水道</th>
-          <th>食費</th>
+          <th>雑費</th>
           <th>ネット</th>
           <th>合計(4人)</th>
           <th>Kei→Miz</th>
@@ -449,43 +482,43 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 
 <script>
 const SEED = [
-  {y:2023,m:3,elec:37342,water:0,food:21300,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2023,m:4,elec:35000,water:14434,food:15000,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2023,m:5,elec:20325,water:15434,food:13200,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2023,m:6,elec:18161,water:0,food:13010,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2023,m:7,elec:18881,water:15434,food:21285,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2023,m:8,elec:27533,water:0,food:12613,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2023,m:9,elec:29224,water:15767,food:17272,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2023,m:10,elec:27533,water:0,food:15684,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2023,m:11,elec:29224,water:15100,food:10928,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:47000,miz_other:0,par_pay:120000,memo:'魔笛'},
-  {y:2023,m:12,elec:27629,water:15767,food:13674,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:1,elec:36833,water:0,food:19010,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:2,elec:36833,water:17661,food:30884,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:3,elec:42446,water:0,food:15440,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:4,elec:27001,water:14767,food:24243,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:5,elec:36135,water:0,food:14483,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:6,elec:22160,water:14100,food:15284,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:7,elec:21884,water:0,food:28476,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:122402,miz_other:0,par_pay:120000,memo:'ハーディング・ラトル・非常用品'},
-  {y:2024,m:8,elec:37800,water:15800,food:26764,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:13465,par_pay:120000,memo:''},
-  {y:2024,m:9,elec:37622,water:0,food:17747,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:10,elec:35226,water:14767,food:8478,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:11,elec:29689,water:0,food:35600,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2024,m:12,elec:24062,water:14767,food:35600,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:1,elec:33987,water:0,food:19378,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:2,elec:45681,water:15767,food:24255,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:3,elec:45699,water:15767,food:14699,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:4,elec:44070,water:0,food:19338,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:5,elec:42581,water:15767,food:30424,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:6,elec:28467,water:0,food:18623,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:7,elec:28384,water:0,food:13837,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:8,elec:36132,water:12433,food:23469,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:70000,miz_other:0,par_pay:120000,memo:'スノーピーク'},
-  {y:2025,m:9,elec:36132,water:0,food:19907,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:10,elec:34651,water:12193,food:17706,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:11,elec:31490,water:0,food:9241,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2025,m:12,elec:44376,water:15434,food:20841,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2026,m:1,elec:63707,water:0,food:30604,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2026,m:2,elec:61400,water:0,food:12660,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
-  {y:2026,m:3,elec:49656,water:15100,food:30021,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:3,elec:37342,water:0,food:21300,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2023,m:4,elec:35000,water:14434,food:15000,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2023,m:5,elec:20325,water:15434,food:13200,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2023,m:6,elec:18161,water:0,food:13010,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2023,m:7,elec:18881,water:15434,food:21285,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2023,m:8,elec:27533,water:0,food:12613,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2023,m:9,elec:29224,water:15767,food:17272,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2023,m:10,elec:27533,water:0,food:15684,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2023,m:11,elec:29224,water:15100,food:10928,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:47000,miz_other:0,par_comm:10000,par_pay:120000,memo:'魔笛'},
+  {y:2023,m:12,elec:27629,water:15767,food:13674,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:1,elec:36833,water:0,food:19010,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:2,elec:36833,water:17661,food:30884,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:3,elec:42446,water:0,food:15440,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:4,elec:27001,water:14767,food:24243,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:5,elec:36135,water:0,food:14483,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:6,elec:22160,water:14100,food:15284,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:7,elec:21884,water:0,food:28476,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:122402,miz_other:0,par_comm:10000,par_pay:120000,memo:'ハーディング・ラトル・非常用品'},
+  {y:2024,m:8,elec:37800,water:15800,food:26764,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:13465,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:9,elec:37622,water:0,food:17747,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:10,elec:35226,water:14767,food:8478,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:11,elec:29689,water:0,food:35600,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2024,m:12,elec:24062,water:14767,food:35600,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:1,elec:33987,water:0,food:19378,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:2,elec:45681,water:15767,food:24255,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:3,elec:45699,water:15767,food:14699,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:4,elec:44070,water:0,food:19338,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:5,elec:42581,water:15767,food:30424,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:6,elec:28467,water:0,food:18623,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:7,elec:28384,water:0,food:13837,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:8,elec:36132,water:12433,food:23469,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:70000,miz_other:0,par_comm:10000,par_pay:120000,memo:'スノーピーク'},
+  {y:2025,m:9,elec:36132,water:0,food:19907,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:10,elec:34651,water:12193,food:17706,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:11,elec:31490,water:0,food:9241,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2025,m:12,elec:44376,water:15434,food:20841,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:120000,memo:''},
+  {y:2026,m:1,elec:63707,water:0,food:30604,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
+  {y:2026,m:2,elec:61400,water:0,food:12660,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
+  {y:2026,m:3,elec:49656,water:15100,food:30021,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
 ];
 
 const STORAGE_KEY = 'household_v2';
@@ -494,7 +527,7 @@ try { overrides = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch
 
 function calcSettle(d) {
   const mizTotal = d.rent + d.net + d.miz_other;
-  const keiTotal = d.elec + d.water + d.food + d.netflix + d.nhk + d.youtube + d.apple + d.kei_other;
+  const keiTotal = d.elec + d.water + d.food + d.netflix + d.nhk + d.youtube + d.apple + d.kei_other + (d.par_comm||0);
   const diff = mizTotal - keiTotal;
   const settle = Math.round(diff / 2 + d.par_pay / 2);
   return { mizTotal, keiTotal, diff, settle };
@@ -545,10 +578,25 @@ function initCharts() {
     { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#c0335e', backgroundColor: 'rgba(192,51,94,0.04)', fill: false, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c0335e', borderWidth: 1.5, borderDash: [4,3] },
   ]);
 
-  mkLine('chartUtil', [
-    { label: '電気ガス', data: data.map(d => d.elec), borderColor: '#1a6fc4', backgroundColor: 'rgba(26,111,196,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#1a6fc4', borderWidth: 1.5 },
-    { label: '水道', data: data.map(d => d.water), borderColor: '#0d8f6a', backgroundColor: 'rgba(13,143,106,0.06)', fill: true, tension: 0.35, pointRadius: 4, pointBackgroundColor: '#0d8f6a', borderWidth: 1.5, borderDash: [5,3] },
-  ]);
+  if (charts['chartUtil']) charts['chartUtil'].destroy();
+  charts['chartUtil'] = new Chart(document.getElementById('chartUtil'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '電気ガス', data: data.map(d => d.elec), backgroundColor: 'rgba(26,111,196,0.75)', borderColor: '#1a6fc4', borderWidth: 0 },
+        { label: '水道', data: data.map(d => d.water), backgroundColor: 'rgba(13,143,106,0.75)', borderColor: '#0d8f6a', borderWidth: 0 },
+        { label: '雑費', data: data.map(d => d.food), backgroundColor: 'rgba(196,122,16,0.75)', borderColor: '#c47a10', borderWidth: 0 },
+      ]
+    },
+    options: {
+      ...chartDefaults(),
+      scales: {
+        x: { stacked: true, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a96', maxRotation: 45, autoSkip: true }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.1)' } },
+        y: { stacked: true, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a96', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.1)' } }
+      }
+    }
+  });
 
   mkLine('chartFood', [
     { label: '食費', data: data.map(d => d.food), borderColor: '#c47a10', backgroundColor: 'rgba(196,122,16,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c47a10', borderWidth: 1.5 },
@@ -645,7 +693,7 @@ function loadEdit() {
   const m = +document.getElementById('editMonth').value;
   const all = getAll();
   const found = all.find(d => d.y === y && d.m === m) || {};
-  const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_pay'];
+  const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_comm','par_pay'];
   fields.forEach(f => {
     const el = document.getElementById('e_'+f);
     if (el) el.value = found[f] !== undefined ? found[f] || '' : '';
@@ -669,7 +717,8 @@ function updatePreview() {
     youtube: g('e_youtube'),
     apple: g('e_apple'),
     kei_other: g('e_kei_other'),
-    par_pay: g('e_par_pay') || 120000,
+    par_comm: g('e_par_comm') || 10000,
+    par_pay: g('e_par_pay') || 130000,
   };
   const { mizTotal, keiTotal, diff, settle } = calcSettle(d);
   document.getElementById('prev-miz').textContent = `¥${fmt(mizTotal)}`;
@@ -678,7 +727,7 @@ function updatePreview() {
   document.getElementById('prev-settle').textContent = `¥${fmt(settle)}`;
 }
 
-['e_elec','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_net','e_miz_other','e_kei_other','e_par_pay'].forEach(id => {
+['e_elec','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_net','e_miz_other','e_kei_other','e_par_comm','e_par_pay'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', updatePreview);
 });
@@ -689,7 +738,7 @@ function saveMonth() {
   const key = `${y}-${m}`;
   const g = id => { const v = document.getElementById(id)?.value; return v !== '' ? +v : undefined; };
   const memo = document.getElementById('e_memo')?.value || '';
-  const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_pay'];
+  const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_comm','par_pay'];
   const obj = { memo };
   fields.forEach(f => { const v = g('e_'+f); if (v !== undefined) obj[f] = v; });
 
@@ -702,11 +751,39 @@ function saveMonth() {
   setTimeout(() => { btn.textContent = '保存'; btn.classList.remove('saved'); }, 2000);
 }
 
+function setupAdders() {
+  document.querySelectorAll('.edit-grid .field input[type="number"]').forEach(input => {
+    const row = document.createElement('div');
+    row.className = 'adder-row';
+    row.innerHTML = `<input type="number" class="adder-input" placeholder="＋追加金額"><button class="adder-btn" type="button">+</button>`;
+    const sumEl = document.createElement('div');
+    sumEl.className = 'adder-sum';
+    input.after(row);
+    row.after(sumEl);
+
+    const adderInput = row.querySelector('.adder-input');
+    const adderBtn = row.querySelector('.adder-btn');
+
+    const add = () => {
+      const val = parseFloat(adderInput.value);
+      if (!val) return;
+      const current = parseFloat(input.value) || 0;
+      input.value = Math.round(current + val);
+      adderInput.value = '';
+      input.dispatchEvent(new Event('input'));
+      sumEl.textContent = `合計 ¥${fmt(parseFloat(input.value))}`;
+    };
+
+    adderBtn.addEventListener('click', add);
+    adderInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+  });
+}
+
 document.getElementById('lock-input').addEventListener('input', function() {
   if (this.value === '7130') {
     document.getElementById('lock').style.display = 'none';
     document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
-    setupEditDropdowns(); loadEdit(); updateMetrics(); updateTable(); initCharts();
+    setupEditDropdowns(); loadEdit(); updateMetrics(); updateTable(); initCharts(); setupAdders();
   } else if (this.value.length >= 4) {
     document.getElementById('lock-error').textContent = 'パスワードが違います';
     this.value = '';
