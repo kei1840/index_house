@@ -517,8 +517,9 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 
   <!-- TABLE -->
   <div class="card table-card">
-    <div class="card-title" id="tableToggle" onclick="toggleTable()" style="cursor:pointer;user-select:none">
-      月次データ（直近18ヶ月）<span id="tableArrow" style="float:right;font-size:0.8rem">▶</span>
+    <div id="tableToggle" onclick="toggleTable()" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
+      <span style="font-family:var(--sans);font-size:0.88rem;font-weight:500;color:var(--text);letter-spacing:.02em">月次データ（直近18ヶ月）</span>
+      <span id="tableArrow" style="font-size:0.72rem;color:var(--accent-settle);font-family:var(--mono);border:1px solid rgba(107,79,216,0.3);border-radius:4px;padding:1px 8px;">▼ 開く</span>
     </div>
     <div id="tableWrap" style="display:none">
     <table class="data-table">
@@ -968,7 +969,7 @@ function toggleTable() {
   const arrow = document.getElementById('tableArrow');
   const open = wrap.style.display === 'none';
   wrap.style.display = open ? '' : 'none';
-  arrow.textContent = open ? '▼' : '▶';
+  arrow.innerHTML = open ? '▲ 閉じる' : '▼ 開く';
 }
 
 const TEST_KEY = 'household_test_backup';
