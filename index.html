@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家計ダッシュボード</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+#lock {
+  position: fixed; inset: 0; background: #f4f4f0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+#lock-box { text-align: center; }
+#lock-box h1 {
+  font-family: 'DM Mono', monospace; font-size: 0.85rem;
+  letter-spacing: .1em; color: #8a8a96; margin-bottom: 1.5rem;
+}
+#lock-input {
+  font-family: 'DM Mono', monospace; font-size: 1.6rem;
+  letter-spacing: .4em; text-align: center;
+  width: 160px; padding: 8px 12px;
+  border: 1px solid rgba(0,0,0,0.15); border-radius: 8px;
+  background: #fff; color: #1a1a1e; outline: none;
+  -webkit-text-security: disc;
+}
+#lock-input:focus { border-color: rgba(0,0,0,0.3); }
+#lock-error {
+  font-family: 'DM Mono', monospace; font-size: 0.7rem;
+  color: #c0335e; margin-top: 0.75rem; min-height: 1rem;
+}
+:root {
+  --bg: #f4f4f0;
+  --surface: #ffffff;
+  --surface2: #f8f8f5;
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a1e;
+  --muted: #8a8a96;
+  --accent-elec: #1a6fc4;
+  --accent-water: #0d8f6a;
+  --accent-food: #c47a10;
+  --accent-kei: #c0335e;
+  --accent-settle: #6b4fd8;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Noto Sans JP', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; }
+
+header {
+  padding: 2rem 2.5rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 1.5rem;
+}
+header h1 { font-size: 1.1rem; font-weight: 500; letter-spacing: .04em; color: var(--text); }
+header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+
+.dashboard {
+  padding: 1.5rem 2.5rem 3rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 1.2rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+.card-title {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+/* METRICS ROW */
+.metrics-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.metric-card.elec::before { background: var(--accent-elec); }
+.metric-card.water::before { background: var(--accent-water); }
+.metric-card.food::before { background: var(--accent-food); }
+.metric-card.total::before { background: var(--accent-settle); }
+.metric-card.settle::before { background: var(--accent-kei); }
+
+.metric-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+.metric-value {
+  font-family: var(--mono);
+  font-size: 1.45rem;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+}
+.metric-value span { font-size: 0.7rem; color: var(--muted); margin-left: 2px; }
+.metric-sub {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+.metric-delta {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  margin-top: 0.25rem;
+}
+.delta-up { color: #f06292; }
+.delta-dn { color: var(--accent-water); }
+
+/* CHARTS */
+.chart-main { grid-column: 1 / 3; }
+.chart-util { grid-column: 3 / 4; }
+.chart-food { grid-column: 1 / 2; }
+.chart-settle { grid-column: 2 / 4; }
+
+.chart-wrap { position: relative; width: 100%; }
+.chart-wrap.h240 { height: 240px; }
+.chart-wrap.h200 { height: 200px; }
+
+/* EDIT PANEL */
+.edit-panel {
+  grid-column: 1 / -1;
+  background: var(--surface);
+  border: 1px solid rgba(107,79,216,0.2);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+.edit-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+.edit-header h2 {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent-settle);
+}
+.month-select-row { display: flex; gap: 0.5rem; align-items: center; }
+.month-select-row select {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+}
+.save-btn {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  padding: 5px 16px;
+  background: var(--accent-settle);
+  color: #0f0f11;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  letter-spacing: .04em;
+  transition: opacity 0.15s;
+}
+.save-btn:hover { opacity: 0.85; }
+.save-btn.saved { background: var(--accent-water); color: #fff; }
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+.edit-col-title {
+  font-family: var(--mono);
+  font-size: 0.63rem;
+  color: var(--muted);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+.field { margin-bottom: 0.55rem; }
+.field label {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.field input {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  text-align: right;
+}
+.field input:focus { outline: none; border-color: rgba(167,139,250,0.5); }
+
+.settle-preview {
+  display: flex; align-items: center; gap: 2rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.settle-item { display: flex; align-items: baseline; gap: 0.5rem; }
+.settle-item label { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); }
+.settle-item .val { font-family: var(--mono); font-size: 1.1rem; font-weight: 500; }
+.settle-highlight { color: var(--accent-kei); }
+
+/* TABLE */
+.table-card { grid-column: 1 / -1; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.data-table th {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: right;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th:first-child { text-align: left; }
+.data-table td {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  text-align: right;
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  color: var(--text);
+}
+.data-table td:first-child { text-align: left; color: var(--muted); }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+.data-table .highlight { color: var(--accent-kei); font-weight: 500; }
+.data-table .zero { color: var(--muted); }
+
+.legend-row {
+  display: flex; gap: 1rem; flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+  font-family: var(--mono); font-size: 0.65rem; color: var(--muted);
+}
+.legend-row span { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div id="lock">
+  <div id="lock-box">
+    <h1>家計ダッシュボード</h1>
+    <input id="lock-input" type="password" maxlength="6" autofocus placeholder="••••">
+    <div id="lock-error"></div>
+  </div>
+</div>
+
+<header>
+  <h1>家計ダッシュボード</h1>
+  <span id="headerDate"></span>
+</header>
+
+<div class="dashboard">
+
+  <!-- METRICS -->
+  <div class="metrics-row">
+    <div class="metric-card elec">
+      <div class="metric-label">電気・ガス</div>
+      <div class="metric-value" id="m-elec">—<span>円</span></div>
+      <div class="metric-sub" id="m-elec-avg">12ヶ月平均 —</div>
+      <div class="metric-delta" id="m-elec-delta"></div>
+    </div>
+    <div class="metric-card water">
+      <div class="metric-label">水道</div>
+      <div class="metric-value" id="m-water">—<span>円</span></div>
+      <div class="metric-sub" id="m-water-avg">有月平均 —</div>
+      <div class="metric-delta" id="m-water-delta"></div>
+    </div>
+    <div class="metric-card food">
+      <div class="metric-label">食費・日用品</div>
+      <div class="metric-value" id="m-food">—<span>円</span></div>
+      <div class="metric-sub" id="m-food-avg">12ヶ月平均 —</div>
+      <div class="metric-delta" id="m-food-delta"></div>
+    </div>
+    <div class="metric-card total">
+      <div class="metric-label">合計支出（4人）</div>
+      <div class="metric-value" id="m-total">—<span>円</span></div>
+      <div class="metric-sub" id="m-total-avg">12ヶ月平均 —</div>
+    </div>
+    <div class="metric-card settle">
+      <div class="metric-label">Kei → Miz 精算</div>
+      <div class="metric-value" id="m-settle">—<span>円</span></div>
+      <div class="metric-sub" id="m-settle-month">最新月 —</div>
+    </div>
+  </div>
+
+  <!-- MAIN CHART: 合計推移 -->
+  <div class="card chart-main">
+    <div class="card-title">合計支出 推移（4人）</div>
+    <div class="legend-row">
+      <span><span class="legend-dot" style="background:#6b4fd8"></span>合計支出</span>
+      <span><span class="legend-dot" style="background:#c0335e"></span>Kei→Miz精算</span>
+    </div>
+    <div class="chart-wrap h240">
+      <canvas id="chartMain" role="img" aria-label="合計支出とKei精算額の月次推移"></canvas>
+    </div>
+  </div>
+
+  <!-- UTIL CHART -->
+  <div class="card chart-util">
+    <div class="card-title">水道・電気ガス 推移</div>
+    <div class="legend-row">
+      <span><span class="legend-dot" style="background:#1a6fc4"></span>電気ガス</span>
+      <span><span class="legend-dot" style="background:#0d8f6a"></span>水道</span>
+    </div>
+    <div class="chart-wrap h240">
+      <canvas id="chartUtil" role="img" aria-label="水道・電気ガスの月次推移"></canvas>
+    </div>
+  </div>
+
+  <!-- FOOD CHART -->
+  <div class="card chart-food">
+    <div class="card-title">食費 推移</div>
+    <div class="chart-wrap h200">
+      <canvas id="chartFood" role="img" aria-label="食費の月次推移"></canvas>
+    </div>
+  </div>
+
+  <!-- SETTLE CHART -->
+  <div class="card chart-settle">
+    <div class="card-title">Kei → Miz 精算額 推移</div>
+    <div class="chart-wrap h200">
+      <canvas id="chartSettle" role="img" aria-label="精算額の月次推移"></canvas>
+    </div>
+  </div>
+
+  <!-- EDIT PANEL -->
+  <div class="edit-panel">
+    <div class="edit-header">
+      <h2>月次入力</h2>
+      <div class="month-select-row">
+        <select id="editYear"></select>
+        <select id="editMonth"></select>
+        <button class="save-btn" id="saveBtn" onclick="saveMonth()">保存</button>
+      </div>
+    </div>
+
+    <div class="edit-grid">
+      <div>
+        <div class="edit-col-title">水道・光熱</div>
+        <div class="field"><label>電気・ガス (Kei払)</label><input type="number" id="e_elec" placeholder="0"></div>
+        <div class="field"><label>水道 (Kei払)</label><input type="number" id="e_water" placeholder="0"></div>
+      </div>
+      <div>
+        <div class="edit-col-title">食費・家賃</div>
+        <div class="field"><label>食費・日用品 (Kei払)</label><input type="number" id="e_food" placeholder="0"></div>
+        <div class="field"><label>食費・父母分</label><input type="number" id="e_food_par" placeholder="0"></div>
+        <div class="field"><label>家賃 (Miz払)</label><input type="number" id="e_rent" placeholder="150000"></div>
+      </div>
+      <div>
+        <div class="edit-col-title">サブスク (Kei払)</div>
+        <div class="field"><label>Netflix</label><input type="number" id="e_netflix" placeholder="0"></div>
+        <div class="field"><label>NHK</label><input type="number" id="e_nhk" placeholder="0"></div>
+        <div class="field"><label>YouTube</label><input type="number" id="e_youtube" placeholder="0"></div>
+        <div class="field"><label>Apple</label><input type="number" id="e_apple" placeholder="0"></div>
+      </div>
+      <div>
+        <div class="edit-col-title">その他</div>
+        <div class="field"><label>ネット (Miz払)</label><input type="number" id="e_net" placeholder="6000"></div>
+        <div class="field"><label>Miz臨時</label><input type="number" id="e_miz_other" placeholder="0"></div>
+        <div class="field"><label>Kei臨時</label><input type="number" id="e_kei_other" placeholder="0"></div>
+        <div class="field"><label>父母支払分 (手入力)</label><input type="number" id="e_par_pay" placeholder="120000"></div>
+      </div>
+      <div>
+        <div class="edit-col-title">備考</div>
+        <div class="field"><label>メモ</label><input type="text" id="e_memo" placeholder="特記事項" style="text-align:left"></div>
+      </div>
+    </div>
+
+    <div class="settle-preview">
+      <div class="settle-item">
+        <label>Miz支出合計</label>
+        <div class="val" id="prev-miz">—</div>
+      </div>
+      <div class="settle-item">
+        <label>Kei支出合計</label>
+        <div class="val" id="prev-kei">—</div>
+      </div>
+      <div class="settle-item">
+        <label>差額</label>
+        <div class="val" id="prev-diff">—</div>
+      </div>
+      <div class="settle-item">
+        <label>父母支払分込み精算</label>
+        <div class="val settle-highlight" id="prev-settle">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="card table-card">
+    <div class="card-title">月次データ（直近18ヶ月）</div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>月</th>
+          <th>電気ガス</th>
+          <th>水道</th>
+          <th>食費</th>
+          <th>ネット</th>
+          <th>合計(4人)</th>
+          <th>Kei→Miz</th>
+          <th>メモ</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const SEED = [
+  {y:2023,m:3,elec:37342,water:0,food:21300,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:4,elec:35000,water:14434,food:15000,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:5,elec:20325,water:15434,food:13200,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:6,elec:18161,water:0,food:13010,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:7,elec:18881,water:15434,food:21285,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:8,elec:27533,water:0,food:12613,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:9,elec:29224,water:15767,food:17272,food_par:70000,rent:150000,net:6000,netflix:1500,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:10,elec:27533,water:0,food:15684,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2023,m:11,elec:29224,water:15100,food:10928,food_par:70000,rent:150000,net:6000,netflix:0,nhk:0,youtube:1800,apple:0,kei_other:47000,miz_other:0,par_pay:120000,memo:'魔笛'},
+  {y:2023,m:12,elec:27629,water:15767,food:13674,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:1,elec:36833,water:0,food:19010,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:2,elec:36833,water:17661,food:30884,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:3,elec:42446,water:0,food:15440,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:4,elec:27001,water:14767,food:24243,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:5,elec:36135,water:0,food:14483,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:6,elec:22160,water:14100,food:15284,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:7,elec:21884,water:0,food:28476,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:1000,youtube:1800,apple:0,kei_other:122402,miz_other:0,par_pay:120000,memo:'ハーディング・ラトル・非常用品'},
+  {y:2024,m:8,elec:37800,water:15800,food:26764,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:13465,par_pay:120000,memo:''},
+  {y:2024,m:9,elec:37622,water:0,food:17747,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:10,elec:35226,water:14767,food:8478,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:11,elec:29689,water:0,food:35600,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2024,m:12,elec:24062,water:14767,food:35600,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:0,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:1,elec:33987,water:0,food:19378,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:2,elec:45681,water:15767,food:24255,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:3,elec:45699,water:15767,food:14699,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:4,elec:44070,water:0,food:19338,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:5,elec:42581,water:15767,food:30424,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:6,elec:28467,water:0,food:18623,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:7,elec:28384,water:0,food:13837,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:8,elec:36132,water:12433,food:23469,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:70000,miz_other:0,par_pay:120000,memo:'スノーピーク'},
+  {y:2025,m:9,elec:36132,water:0,food:19907,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:10,elec:34651,water:12193,food:17706,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:2300,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:11,elec:31490,water:0,food:9241,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2025,m:12,elec:44376,water:15434,food:20841,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2026,m:1,elec:63707,water:0,food:30604,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2026,m:2,elec:61400,water:0,food:12660,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+  {y:2026,m:3,elec:49656,water:15100,food:30021,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_pay:120000,memo:''},
+];
+
+const STORAGE_KEY = 'household_v2';
+let overrides = {};
+try { overrides = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){}
+
+function calcSettle(d) {
+  const mizTotal = d.rent + d.net + d.miz_other;
+  const keiTotal = d.elec + d.water + d.food + d.netflix + d.nhk + d.youtube + d.apple + d.kei_other;
+  const diff = mizTotal - keiTotal;
+  const settle = Math.round(diff / 2 + d.par_pay / 2);
+  return { mizTotal, keiTotal, diff, settle };
+}
+
+function getAll() {
+  return SEED.map(r => {
+    const key = `${r.y}-${r.m}`;
+    return overrides[key] ? { ...r, ...overrides[key] } : { ...r };
+  }).sort((a,b) => a.y !== b.y ? a.y - b.y : a.m - b.m);
+}
+
+function fmt(v) { return Math.round(v).toLocaleString('ja-JP'); }
+function fmtLabel(d) { return `${d.y}/${String(d.m).padStart(2,'0')}`; }
+
+function chartDefaults() {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: {
+      backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.12)', borderWidth: 1,
+      titleColor: '#8a8a96', bodyColor: '#1a1a1e', titleFont: { family: 'DM Mono', size: 11 },
+      bodyFont: { family: 'DM Mono', size: 11 },
+      callbacks: { label: ctx => ` ¥${fmt(ctx.raw)}` }
+    }},
+    scales: {
+      x: { ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a96', maxRotation: 45, autoSkip: true }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.1)' } },
+      y: { ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a96', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.1)' } }
+    }
+  };
+}
+
+let charts = {};
+function initCharts() {
+  const data = getAll().slice(-18);
+  const labels = data.map(fmtLabel);
+
+  const mkLine = (id, datasets) => {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(document.getElementById(id), {
+      type: 'line',
+      data: { labels, datasets },
+      options: { ...chartDefaults() }
+    });
+  };
+
+  mkLine('chartMain', [
+    { label: '合計支出', data: data.map(d => d.rent+d.food+d.food_par+d.water+d.elec+d.net), borderColor: '#6b4fd8', backgroundColor: 'rgba(107,79,216,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#6b4fd8', borderWidth: 1.5 },
+    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#c0335e', backgroundColor: 'rgba(192,51,94,0.04)', fill: false, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c0335e', borderWidth: 1.5, borderDash: [4,3] },
+  ]);
+
+  mkLine('chartUtil', [
+    { label: '電気ガス', data: data.map(d => d.elec), borderColor: '#1a6fc4', backgroundColor: 'rgba(26,111,196,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#1a6fc4', borderWidth: 1.5 },
+    { label: '水道', data: data.map(d => d.water), borderColor: '#0d8f6a', backgroundColor: 'rgba(13,143,106,0.06)', fill: true, tension: 0.35, pointRadius: 4, pointBackgroundColor: '#0d8f6a', borderWidth: 1.5, borderDash: [5,3] },
+  ]);
+
+  mkLine('chartFood', [
+    { label: '食費', data: data.map(d => d.food), borderColor: '#c47a10', backgroundColor: 'rgba(196,122,16,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c47a10', borderWidth: 1.5 },
+  ]);
+
+  mkLine('chartSettle', [
+    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#c0335e', backgroundColor: 'rgba(192,51,94,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c0335e', borderWidth: 1.5 },
+  ]);
+}
+
+function updateMetrics() {
+  const all = getAll();
+  const last12 = all.slice(-12);
+  const latest = all[all.length - 1];
+  const prev = all[all.length - 2];
+
+  const delta = (cur, prv, el) => {
+    if (!prv || prv === 0) return;
+    const d = cur - prv;
+    const pct = Math.round(d / prv * 100);
+    const sign = d > 0 ? '+' : '';
+    el.textContent = `前月比 ${sign}¥${fmt(Math.abs(d))} (${sign}${pct}%)`;
+    el.className = 'metric-delta ' + (d > 0 ? 'delta-up' : 'delta-dn');
+  };
+
+  const avgElec = Math.round(last12.reduce((s,d) => s+d.elec, 0) / last12.length);
+  const waterMonths = last12.filter(d => d.water > 0);
+  const avgWater = waterMonths.length ? Math.round(waterMonths.reduce((s,d) => s+d.water, 0) / waterMonths.length) : 0;
+  const avgFood = Math.round(last12.reduce((s,d) => s+d.food, 0) / last12.length);
+  const avgTotal = Math.round(last12.reduce((s,d) => s+d.rent+d.food+d.food_par+d.water+d.elec+d.net, 0) / last12.length);
+
+  document.getElementById('m-elec').innerHTML = `${fmt(latest.elec)}<span>円</span>`;
+  document.getElementById('m-elec-avg').textContent = `12ヶ月平均 ¥${fmt(avgElec)}`;
+  delta(latest.elec, prev?.elec, document.getElementById('m-elec-delta'));
+
+  document.getElementById('m-water').innerHTML = latest.water > 0 ? `${fmt(latest.water)}<span>円</span>` : `—<span>（非請求月）</span>`;
+  document.getElementById('m-water-avg').textContent = `有月平均 ¥${fmt(avgWater)}`;
+  if (latest.water > 0) delta(latest.water, prev?.water, document.getElementById('m-water-delta'));
+
+  document.getElementById('m-food').innerHTML = `${fmt(latest.food)}<span>円</span>`;
+  document.getElementById('m-food-avg').textContent = `12ヶ月平均 ¥${fmt(avgFood)}`;
+  delta(latest.food, prev?.food, document.getElementById('m-food-delta'));
+
+  const latestTotal = latest.rent + latest.food + latest.food_par + latest.water + latest.elec + latest.net;
+  document.getElementById('m-total').innerHTML = `${fmt(latestTotal)}<span>円</span>`;
+  document.getElementById('m-total-avg').textContent = `12ヶ月平均 ¥${fmt(avgTotal)}`;
+
+  const { settle } = calcSettle(latest);
+  document.getElementById('m-settle').innerHTML = `${fmt(settle)}<span>円</span>`;
+  document.getElementById('m-settle-month').textContent = `最新月 ${fmtLabel(latest)}`;
+}
+
+function updateTable() {
+  const data = getAll().slice(-18).reverse();
+  let html = '';
+  data.forEach(d => {
+    const { settle } = calcSettle(d);
+    html += `<tr>
+      <td>${fmtLabel(d)}</td>
+      <td>${d.elec ? `¥${fmt(d.elec)}` : '<span class="zero">—</span>'}</td>
+      <td>${d.water ? `¥${fmt(d.water)}` : '<span class="zero">—</span>'}</td>
+      <td>¥${fmt(d.food)}</td>
+      <td>¥${fmt(d.net)}</td>
+      <td>¥${fmt(d.rent+d.food+d.food_par+d.water+d.elec+d.net)}</td>
+      <td class="highlight">¥${fmt(settle)}</td>
+      <td style="color:var(--muted); font-size:0.68rem">${d.memo||''}</td>
+    </tr>`;
+  });
+  document.getElementById('tableBody').innerHTML = html;
+}
+
+function setupEditDropdowns() {
+  const yEl = document.getElementById('editYear');
+  const mEl = document.getElementById('editMonth');
+  const all = getAll();
+  const latest = all[all.length - 1];
+  const years = [...new Set(all.map(d => d.y))];
+  years.sort((a,b) => b-a).forEach(y => {
+    const o = document.createElement('option'); o.value = y; o.textContent = `${y}年`;
+    if (y === latest.y) o.selected = true;
+    yEl.appendChild(o);
+  });
+  for (let m = 1; m <= 12; m++) {
+    const o = document.createElement('option'); o.value = m; o.textContent = `${m}月`;
+    if (m === latest.m) o.selected = true;
+    mEl.appendChild(o);
+  }
+  yEl.addEventListener('change', loadEdit);
+  mEl.addEventListener('change', loadEdit);
+}
+
+function loadEdit() {
+  const y = +document.getElementById('editYear').value;
+  const m = +document.getElementById('editMonth').value;
+  const all = getAll();
+  const found = all.find(d => d.y === y && d.m === m) || {};
+  const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_pay'];
+  fields.forEach(f => {
+    const el = document.getElementById('e_'+f);
+    if (el) el.value = found[f] !== undefined ? found[f] || '' : '';
+  });
+  const memoEl = document.getElementById('e_memo');
+  if (memoEl) memoEl.value = found.memo || '';
+  updatePreview();
+}
+
+function updatePreview() {
+  const g = id => +document.getElementById(id)?.value || 0;
+  const d = {
+    rent: g('e_rent') || 150000,
+    net: g('e_net') || 6000,
+    miz_other: g('e_miz_other'),
+    elec: g('e_elec'),
+    water: g('e_water'),
+    food: g('e_food'),
+    netflix: g('e_netflix'),
+    nhk: g('e_nhk'),
+    youtube: g('e_youtube'),
+    apple: g('e_apple'),
+    kei_other: g('e_kei_other'),
+    par_pay: g('e_par_pay') || 120000,
+  };
+  const { mizTotal, keiTotal, diff, settle } = calcSettle(d);
+  document.getElementById('prev-miz').textContent = `¥${fmt(mizTotal)}`;
+  document.getElementById('prev-kei').textContent = `¥${fmt(keiTotal)}`;
+  document.getElementById('prev-diff').textContent = `¥${fmt(diff)}`;
+  document.getElementById('prev-settle').textContent = `¥${fmt(settle)}`;
+}
+
+['e_elec','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_net','e_miz_other','e_kei_other','e_par_pay'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', updatePreview);
+});
+
+function saveMonth() {
+  const y = +document.getElementById('editYear').value;
+  const m = +document.getElementById('editMonth').value;
+  const key = `${y}-${m}`;
+  const g = id => { const v = document.getElementById(id)?.value; return v !== '' ? +v : undefined; };
+  const memo = document.getElementById('e_memo')?.value || '';
+  const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_pay'];
+  const obj = { memo };
+  fields.forEach(f => { const v = g('e_'+f); if (v !== undefined) obj[f] = v; });
+
+  overrides[key] = obj;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e){}
+
+  updateMetrics(); updateTable(); initCharts();
+  const btn = document.getElementById('saveBtn');
+  btn.textContent = '保存済み ✓'; btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = '保存'; btn.classList.remove('saved'); }, 2000);
+}
+
+document.getElementById('lock-input').addEventListener('input', function() {
+  if (this.value === '7130') {
+    document.getElementById('lock').style.display = 'none';
+    document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
+    setupEditDropdowns(); loadEdit(); updateMetrics(); updateTable(); initCharts();
+  } else if (this.value.length >= 4) {
+    document.getElementById('lock-error').textContent = 'パスワードが違います';
+    this.value = '';
+    setTimeout(() => document.getElementById('lock-error').textContent = '', 1500);
+  }
+});
+
+</script>
+</body>
+</html>
