@@ -456,6 +456,8 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <select id="editYear"></select>
         <select id="editMonth"></select>
         <button class="save-btn" id="saveBtn" onclick="saveMonth()">保存</button>
+        <button class="save-btn" id="testBtn" onclick="fillTestData()" style="background:var(--accent-water);color:#fff;margin-left:4px">テスト入力</button>
+        <button class="save-btn" id="clearTestBtn" onclick="clearTestData()" style="background:var(--muted);color:#fff;margin-left:2px;display:none">クリア</button>
       </div>
     </div>
 
@@ -515,7 +517,10 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 
   <!-- TABLE -->
   <div class="card table-card">
-    <div class="card-title">月次データ（直近18ヶ月）</div>
+    <div class="card-title" id="tableToggle" onclick="toggleTable()" style="cursor:pointer;user-select:none">
+      月次データ（直近18ヶ月）<span id="tableArrow" style="float:right;font-size:0.8rem">▶</span>
+    </div>
+    <div id="tableWrap" style="display:none">
     <table class="data-table">
       <thead>
         <tr>
@@ -531,6 +536,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       </thead>
       <tbody id="tableBody"></tbody>
     </table>
+    </div>
   </div>
 
 </div>
@@ -955,6 +961,65 @@ function updateInsights() {
       <div class="insight-sub">${i.sub}</div>
     </div>
   `).join('');
+}
+
+function toggleTable() {
+  const wrap = document.getElementById('tableWrap');
+  const arrow = document.getElementById('tableArrow');
+  const open = wrap.style.display === 'none';
+  wrap.style.display = open ? '' : 'none';
+  arrow.textContent = open ? '▼' : '▶';
+}
+
+const TEST_KEY = 'household_test_backup';
+function fillTestData() {
+  const y = +document.getElementById('editYear').value;
+  const m = +document.getElementById('editMonth').value;
+  const all = getAll();
+  const base = all.find(d => d.y === y && d.m === m) || all[all.length-1];
+  const rnd = (v, pct=20) => v ? Math.round(v * (1 + (Math.random()*2-1) * pct/100)) : 0;
+
+  // バックアップ
+  const backup = {};
+  ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_comm','par_pay'].forEach(f => {
+    const el = document.getElementById('e_'+f);
+    if (el) backup[f] = el.value;
+  });
+  backup.memo = document.getElementById('e_memo')?.value || '';
+  sessionStorage.setItem(TEST_KEY, JSON.stringify(backup));
+
+  // テストデータ入力（±20%）
+  const testVals = {
+    elec: rnd(base.elec, 20), water: rnd(base.water, 20),
+    food: rnd(base.food, 20), food_par: base.food_par,
+    rent: base.rent, netflix: base.netflix,
+    nhk: base.nhk, youtube: base.youtube, apple: base.apple,
+    net: base.net, miz_other: rnd(base.miz_other||0, 20),
+    kei_other: rnd(base.kei_other||0, 20),
+    par_comm: base.par_comm||10000, par_pay: base.par_pay||130000,
+  };
+  Object.entries(testVals).forEach(([f, v]) => {
+    const el = document.getElementById('e_'+f);
+    if (el) { el.value = v || ''; }
+  });
+  document.getElementById('e_memo').value = '[テストデータ]';
+  updatePreview();
+  document.getElementById('clearTestBtn').style.display = '';
+  document.getElementById('testBtn').style.display = 'none';
+}
+
+function clearTestData() {
+  const backup = JSON.parse(sessionStorage.getItem(TEST_KEY) || '{}');
+  ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_comm','par_pay'].forEach(f => {
+    const el = document.getElementById('e_'+f);
+    if (el) el.value = backup[f] ?? '';
+  });
+  const memoEl = document.getElementById('e_memo');
+  if (memoEl) memoEl.value = backup.memo || '';
+  updatePreview();
+  sessionStorage.removeItem(TEST_KEY);
+  document.getElementById('clearTestBtn').style.display = 'none';
+  document.getElementById('testBtn').style.display = '';
 }
 
 function setupAdders() {
