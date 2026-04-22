@@ -596,10 +596,20 @@ function calcSettle(d) {
 }
 
 function getAll() {
-  return SEED.map(r => {
+  const seedKeys = new Set(SEED.map(r => `${r.y}-${r.m}`));
+  const seedRows = SEED.map(r => {
     const key = `${r.y}-${r.m}`;
     return overrides[key] ? { ...r, ...overrides[key] } : { ...r };
-  }).sort((a,b) => a.y !== b.y ? a.y - b.y : a.m - b.m);
+  });
+  const extraRows = Object.entries(overrides)
+    .filter(([k]) => !seedKeys.has(k))
+    .map(([k, v]) => {
+      const [y, m] = k.split('-').map(Number);
+      return { y, m, elec:0, water:0, food:0, food_par:70000, rent:150000,
+        net:6000, netflix:0, nhk:0, youtube:0, apple:0,
+        kei_other:0, miz_other:0, par_comm:10000, par_pay:130000, memo:'', ...v };
+    });
+  return [...seedRows, ...extraRows].sort((a,b) => a.y !== b.y ? a.y - b.y : a.m - b.m);
 }
 
 function fmt(v) { return Math.round(v).toLocaleString('ja-JP'); }
@@ -916,6 +926,11 @@ function updateInsights() {
   const sign = v => v >= 0 ? `+${v}` : `${v}`;
   const dirClass = v => v > 5 ? 'up' : v < -5 ? 'dn' : 'neutral';
 
+  // 追加インサイト
+  const annualSettle = last12.reduce((s,d) => s + settle(d), 0);
+  const fixedMonthly = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
+  const elecPeak = [...last12].sort((a,b) => b.elec - a.elec)[0];
+
   const items = [
     {
       cls: elecYoy !== null ? dirClass(elecYoy) : 'neutral',
@@ -952,6 +967,24 @@ function updateInsights() {
       label: '精算額 最低月（直近12ヶ月）',
       val: `¥${fmt(settle(minSettle))}`,
       sub: `${fmtLabel(minSettle)}${minSettle.memo ? ' ／ ' + minSettle.memo : ''}`
+    },
+    {
+      cls: 'neutral',
+      label: '年間精算額合計（直近12ヶ月）',
+      val: `¥${fmt(annualSettle)}`,
+      sub: `月平均 ¥${fmt(Math.round(annualSettle/12))}`
+    },
+    {
+      cls: 'up',
+      label: '固定費合計（最新月）',
+      val: `¥${fmt(fixedMonthly)}`,
+      sub: `家賃・ネット・サブスク・電話新聞`
+    },
+    {
+      cls: 'up',
+      label: '電気代ピーク月（直近12ヶ月）',
+      val: `¥${fmt(elecPeak.elec)}`,
+      sub: `${fmtLabel(elecPeak)}${elecPeak.memo ? ' ／ ' + elecPeak.memo : ''}`
     },
   ];
 
