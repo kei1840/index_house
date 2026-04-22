@@ -435,6 +435,8 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       <div class="metric-label">Kei → Miz 精算</div>
       <div class="metric-value" id="m-settle">—<span>円</span></div>
       <div class="metric-sub" id="m-settle-month">最新月 —</div>
+      <div class="metric-delta" id="m-settle-delta"></div>
+      <div style="font-family:var(--mono);font-size:0.6rem;color:rgba(192,51,94,0.6);margin-top:3px" id="m-settle-reason"></div>
     </div>
   </div>
 
@@ -765,8 +767,23 @@ function updateMetrics() {
   document.getElementById('m-total-avg').textContent = `12ヶ月平均 ¥${fmt(avgTotal)}`;
 
   const { settle } = calcSettle(latest);
+  const prevSettle = prev ? calcSettle(prev).settle : null;
   document.getElementById('m-settle').innerHTML = `${fmt(settle)}<span>円</span>`;
   document.getElementById('m-settle-month').textContent = `最新月 ${fmtLabel(latest)}`;
+  if (prevSettle !== null) {
+    const sd = settle - prevSettle;
+    const sPct = Math.round(sd / prevSettle * 100);
+    const sDeltaEl = document.getElementById('m-settle-delta');
+    sDeltaEl.textContent = `前月比 ${sd >= 0 ? '+' : ''}¥${fmt(Math.abs(sd))} (${sd >= 0 ? '+' : ''}${sPct}%)`;
+    sDeltaEl.className = 'metric-delta ' + (sd > 0 ? 'delta-up' : 'delta-dn');
+    // 要因分析
+    const reasons = [];
+    const ed = latest.elec - prev.elec, fd = latest.food - prev.food, od = (latest.kei_other||0) - (prev.kei_other||0);
+    if (Math.abs(ed) > 2000) reasons.push(`電気${ed>0?'↑':'↓'}¥${fmt(Math.abs(ed))}`);
+    if (Math.abs(fd) > 2000) reasons.push(`雑費${fd>0?'↑':'↓'}¥${fmt(Math.abs(fd))}`);
+    if (Math.abs(od) > 2000) reasons.push(`臨時${od>0?'↑':'↓'}¥${fmt(Math.abs(od))}`);
+    document.getElementById('m-settle-reason').textContent = reasons.length ? `要因: ${reasons.join(' / ')}` : '';
+  }
 }
 
 function updateTable() {
@@ -1036,6 +1053,49 @@ function updateInsights() {
       val: `¥${fmt(elecPeak.elec)}`,
       sub: `${fmtLabel(elecPeak)}${elecPeak.memo ? ' ／ ' + elecPeak.memo : ''}`
     },
+    // こなし夫婦スタイル追加インサイト
+    (() => {
+      const subMonthly = Math.round(avg(last12, d => d.netflix + d.nhk + d.youtube + d.apple));
+      return {
+        cls: 'up',
+        label: 'サブスク 年換算（12ヶ月平均）',
+        val: `¥${fmt(subMonthly * 12)}`,
+        sub: `月平均¥${fmt(subMonthly)}（Netflix・NHK・YouTube・Apple）`
+      };
+    })(),
+    (() => {
+      // 節約余地アラート: 直近月が12ヶ月平均を20%以上超えているカテゴリ
+      const alerts = [];
+      if (latest.elec > curAvgElec * 1.2) alerts.push(`電気+${Math.round((latest.elec/curAvgElec-1)*100)}%`);
+      if (latest.food > curAvgFood * 1.2) alerts.push(`雑費+${Math.round((latest.food/curAvgFood-1)*100)}%`);
+      if (latest.water > 0 && avgWater > 0 && latest.water > avgWater * 1.2) alerts.push(`水道+${Math.round((latest.water/avgWater-1)*100)}%`);
+      return {
+        cls: alerts.length ? 'up' : 'dn',
+        label: '節約余地アラート（平均比+20%超）',
+        val: alerts.length ? alerts.join('  ') : '異常なし ✓',
+        sub: alerts.length ? '各カテゴリの直近月が平均を大幅超過' : '全カテゴリ平均±20%以内'
+      };
+    })(),
+    (() => {
+      const totalFixed = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
+      const totalAll = latest.rent + latest.food + latest.food_par + latest.water + latest.elec + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0) + (latest.kei_other||0) + (latest.miz_other||0);
+      const fixedRatio = Math.round(totalFixed / totalAll * 100);
+      return {
+        cls: fixedRatio > 70 ? 'up' : 'neutral',
+        label: '固定費率（最新月）',
+        val: `${fixedRatio}%`,
+        sub: `削れる変動費は残り${100-fixedRatio}%（¥${fmt(totalAll - totalFixed)}）`
+      };
+    })(),
+    (() => {
+      const pace = avg(last3, settle);
+      return {
+        cls: 'neutral',
+        label: '年間精算 見通し（直近3ヶ月ペース）',
+        val: `¥${fmt(pace * 12)}`,
+        sub: `直近3ヶ月平均 ¥${fmt(pace)} × 12ヶ月`
+      };
+    })(),
   ];
 
   document.getElementById('insightsGrid').innerHTML = items.map(i => `
