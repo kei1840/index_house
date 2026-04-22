@@ -343,7 +343,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 </head>
 <body>
 
-<div id="lock">
+<div id="lock" style="display:none">
   <div id="lock-box">
     <h1>家計ダッシュボード</h1>
     <input id="lock-input" type="password" maxlength="6" autofocus placeholder="••••">
@@ -832,9 +832,13 @@ function initDonut() {
     { label: 'Miz臨時', val: d.miz_other||0, color: '#e07090' },
   ].filter(i => i.val > 0);
 
-  const items = [...fixed, ...variable];
   const totalFixed = fixed.reduce((s,i) => s+i.val, 0);
   const totalVar = variable.reduce((s,i) => s+i.val, 0);
+
+  const allItems = [...fixed, ...variable].sort((a,b) => b.val - a.val);
+  const top5 = allItems.slice(0, 5);
+  const otherVal = allItems.slice(5).reduce((s,i) => s+i.val, 0);
+  const items = otherVal > 0 ? [...top5, { label: 'その他', val: otherVal, color: '#ccc' }] : top5;
 
   if (charts['chartDonut']) charts['chartDonut'].destroy();
   charts['chartDonut'] = new Chart(document.getElementById('chartDonut'), {
@@ -862,9 +866,7 @@ function initDonut() {
   const mkRow = i => `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span><span style="display:inline-block;width:6px;height:6px;border-radius:1px;background:${i.color};margin-right:3px;vertical-align:middle"></span>${i.label}</span><span style="color:var(--text)">¥${fmt(i.val)}</span></div>`;
   document.getElementById('donutLegend').innerHTML =
     `<div style="color:var(--text);font-weight:500;margin-bottom:3px">固定 ${fixedPct}%</div>` +
-    fixed.map(mkRow).join('') +
-    `<div style="color:var(--text);font-weight:500;margin-top:5px;margin-bottom:3px">変動 ${100-fixedPct}%</div>` +
-    variable.map(mkRow).join('');
+    items.map(mkRow).join('');
 }
 
 function updateInsights() {
