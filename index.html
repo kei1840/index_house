@@ -339,6 +339,53 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 }
 .legend-row span { display: flex; align-items: center; gap: 5px; }
 .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+/* SETTLE CARD EMPHASIS */
+.metric-card.settle {
+  background: linear-gradient(135deg, #fff 60%, rgba(192,51,94,0.04));
+  border-color: rgba(192,51,94,0.2);
+}
+.metric-card.settle .metric-value { font-size: 1.65rem; color: var(--accent-kei); }
+.metric-card.settle .metric-value span { color: rgba(192,51,94,0.5); }
+
+/* TABLE ROW FIX */
+.data-table td { border-bottom: 1px solid var(--border); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface2); }
+
+/* COLLAPSIBLE ANIMATION */
+#tableWrap { overflow: hidden; transition: max-height 0.3s ease; }
+
+/* EDIT PANEL IMPROVEMENTS */
+.edit-panel { border-color: rgba(107,79,216,0.3); }
+.edit-header { flex-wrap: wrap; gap: 0.75rem; }
+.month-select-row { flex-wrap: wrap; }
+
+/* BUTTON VARIANTS */
+.btn-test { background: var(--accent-water) !important; color: #fff !important; }
+.btn-clear { background: var(--muted) !important; color: #fff !important; }
+
+/* SETTLE PREVIEW WRAP */
+.settle-preview { flex-wrap: wrap; gap: 1rem; }
+
+/* RESPONSIVE */
+@media (max-width: 960px) {
+  .dashboard { padding: 1rem 1.25rem 2rem; gap: 1rem; }
+  .metrics-row { grid-template-columns: repeat(3, 1fr); }
+  .metric-card.settle { grid-column: 1 / -1; }
+  .chart-main { grid-column: 1 / -1; }
+  .chart-util, .chart-food, .chart-settle, .chart-donut { grid-column: 1 / -1; }
+  .edit-grid { grid-template-columns: repeat(3, 1fr); }
+  .insights-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  header { padding: 1.25rem 1rem 1rem; }
+  .dashboard { padding: 0.75rem 0.75rem 2rem; }
+  .metrics-row { grid-template-columns: repeat(2, 1fr); }
+  .edit-grid { grid-template-columns: repeat(2, 1fr); }
+  .insights-grid { grid-template-columns: 1fr; }
+  .settle-preview { flex-direction: column; gap: 0.75rem; }
+}
 </style>
 </head>
 <body>
@@ -354,6 +401,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 <header>
   <h1>家計ダッシュボード</h1>
   <span id="headerDate"></span>
+  <span style="font-family:var(--mono);font-size:0.7rem;color:rgba(107,79,216,0.5);margin-left:auto">kei1840</span>
 </header>
 
 <div class="dashboard">
@@ -456,8 +504,8 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <select id="editYear"></select>
         <select id="editMonth"></select>
         <button class="save-btn" id="saveBtn" onclick="saveMonth()">保存</button>
-        <button class="save-btn" id="testBtn" onclick="fillTestData()" style="background:var(--accent-water);color:#fff;margin-left:4px">テスト入力</button>
-        <button class="save-btn" id="clearTestBtn" onclick="clearTestData()" style="background:var(--muted);color:#fff;margin-left:2px;display:none">クリア</button>
+        <button class="save-btn btn-test" id="testBtn" onclick="fillTestData()">テスト入力</button>
+        <button class="save-btn btn-clear" id="clearTestBtn" onclick="clearTestData()" style="display:none">クリア</button>
       </div>
     </div>
 
@@ -521,7 +569,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       <span style="font-family:var(--sans);font-size:0.88rem;font-weight:500;color:var(--text);letter-spacing:.02em">月次データ（直近18ヶ月）</span>
       <span id="tableArrow" style="font-size:0.72rem;color:var(--accent-settle);font-family:var(--mono);border:1px solid rgba(107,79,216,0.3);border-radius:4px;padding:1px 8px;">▼ 開く</span>
     </div>
-    <div id="tableWrap" style="display:none">
+    <div id="tableWrap" style="max-height:0;opacity:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.25s ease">
     <table class="data-table">
       <thead>
         <tr>
@@ -772,6 +820,8 @@ function loadEdit() {
   });
   const memoEl = document.getElementById('e_memo');
   if (memoEl) memoEl.value = found.memo || '';
+  document.querySelectorAll('.adder-sum').forEach(el => el.textContent = '');
+  document.querySelectorAll('.adder-input').forEach(el => el.value = '');
   updatePreview();
 }
 
@@ -1000,9 +1050,16 @@ function updateInsights() {
 function toggleTable() {
   const wrap = document.getElementById('tableWrap');
   const arrow = document.getElementById('tableArrow');
-  const open = wrap.style.display === 'none';
-  wrap.style.display = open ? '' : 'none';
-  arrow.innerHTML = open ? '▲ 閉じる' : '▼ 開く';
+  const isOpen = wrap.style.maxHeight && wrap.style.maxHeight !== '0px';
+  if (isOpen) {
+    wrap.style.maxHeight = '0px';
+    wrap.style.opacity = '0';
+    arrow.innerHTML = '▼ 開く';
+  } else {
+    wrap.style.maxHeight = wrap.scrollHeight + 'px';
+    wrap.style.opacity = '1';
+    arrow.innerHTML = '▲ 閉じる';
+  }
 }
 
 const TEST_KEY = 'household_test_backup';
