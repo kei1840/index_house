@@ -139,7 +139,8 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 .chart-main { grid-column: 1 / 3; }
 .chart-util { grid-column: 3 / 4; }
 .chart-food { grid-column: 1 / 2; }
-.chart-settle { grid-column: 2 / 4; }
+.chart-settle { grid-column: 2 / 3; }
+.chart-donut { grid-column: 3 / 4; }
 
 .chart-wrap { position: relative; width: 100%; }
 .chart-wrap.h240 { height: 240px; }
@@ -427,6 +428,17 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
     <div class="card-title">Kei → Miz 精算額 推移</div>
     <div class="chart-wrap h200">
       <canvas id="chartSettle" role="img" aria-label="精算額の月次推移"></canvas>
+    </div>
+  </div>
+
+  <!-- DONUT CHART -->
+  <div class="card chart-donut">
+    <div class="card-title">固定費 vs 変動費（最新月）</div>
+    <div style="display:flex;align-items:center;gap:1rem;height:200px;">
+      <div class="chart-wrap" style="height:200px;flex:1;min-width:0;">
+        <canvas id="chartDonut" role="img" aria-label="固定費と変動費の内訳"></canvas>
+      </div>
+      <div id="donutLegend" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);flex-shrink:0;line-height:1.6;max-height:200px;overflow-y:auto;"></div>
     </div>
   </div>
 
@@ -792,10 +804,67 @@ function saveMonth() {
   overrides[key] = obj;
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e){}
 
-  updateMetrics(); updateTable(); initCharts(); updateInsights();
+  updateMetrics(); updateTable(); initCharts(); initDonut(); updateInsights();
   const btn = document.getElementById('saveBtn');
   btn.textContent = '保存済み ✓'; btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '保存'; btn.classList.remove('saved'); }, 2000);
+}
+
+function initDonut() {
+  const all = getAll();
+  const d = all[all.length - 1];
+
+  const fixed = [
+    { label: '家賃', val: d.rent, color: '#6b4fd8' },
+    { label: 'ネット', val: d.net, color: '#9b7fef' },
+    { label: 'Netflix', val: d.netflix, color: '#e50914' },
+    { label: 'NHK', val: d.nhk, color: '#4a90d9' },
+    { label: 'YouTube', val: d.youtube, color: '#ff0000' },
+    { label: 'Apple', val: d.apple, color: '#555' },
+    { label: '電話・新聞(父)', val: d.par_comm||0, color: '#888' },
+  ].filter(i => i.val > 0);
+
+  const variable = [
+    { label: '電気ガス', val: d.elec, color: '#1a6fc4' },
+    { label: '水道', val: d.water, color: '#0d8f6a' },
+    { label: '雑費', val: d.food, color: '#c47a10' },
+    { label: 'Kei臨時', val: d.kei_other||0, color: '#c0335e' },
+    { label: 'Miz臨時', val: d.miz_other||0, color: '#e07090' },
+  ].filter(i => i.val > 0);
+
+  const items = [...fixed, ...variable];
+  const totalFixed = fixed.reduce((s,i) => s+i.val, 0);
+  const totalVar = variable.reduce((s,i) => s+i.val, 0);
+
+  if (charts['chartDonut']) charts['chartDonut'].destroy();
+  charts['chartDonut'] = new Chart(document.getElementById('chartDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: items.map(i => i.label),
+      datasets: [{ data: items.map(i => i.val), backgroundColor: items.map(i => i.color), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#fff', borderColor: 'rgba(0,0,0,0.12)', borderWidth: 1,
+          titleColor: '#8a8a96', bodyColor: '#1a1a1e',
+          titleFont: { family: 'DM Mono', size: 10 }, bodyFont: { family: 'DM Mono', size: 11 },
+          callbacks: { label: ctx => ` ¥${fmt(ctx.raw)} (${Math.round(ctx.raw/(totalFixed+totalVar)*100)}%)` }
+        }
+      }
+    }
+  });
+
+  const fixedPct = Math.round(totalFixed / (totalFixed + totalVar) * 100);
+  const mkRow = i => `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span><span style="display:inline-block;width:6px;height:6px;border-radius:1px;background:${i.color};margin-right:3px;vertical-align:middle"></span>${i.label}</span><span style="color:var(--text)">¥${fmt(i.val)}</span></div>`;
+  document.getElementById('donutLegend').innerHTML =
+    `<div style="color:var(--text);font-weight:500;margin-bottom:3px">固定 ${fixedPct}%</div>` +
+    fixed.map(mkRow).join('') +
+    `<div style="color:var(--text);font-weight:500;margin-top:5px;margin-bottom:3px">変動 ${100-fixedPct}%</div>` +
+    variable.map(mkRow).join('');
 }
 
 function updateInsights() {
@@ -914,17 +983,11 @@ function setupAdders() {
   });
 }
 
-document.getElementById('lock-input').addEventListener('input', function() {
-  if (this.value === '7130') {
-    document.getElementById('lock').style.display = 'none';
-    document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
-    setupEditDropdowns(); loadEdit(); updateMetrics(); updateTable(); initCharts(); updateInsights(); setupAdders();
-  } else if (this.value.length >= 4) {
-    document.getElementById('lock-error').textContent = 'パスワードが違います';
-    this.value = '';
-    setTimeout(() => document.getElementById('lock-error').textContent = '', 1500);
-  }
-});
+(() => {
+  document.getElementById('lock').style.display = 'none';
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
+  setupEditDropdowns(); loadEdit(); updateMetrics(); updateTable(); initCharts(); initDonut(); updateInsights(); setupAdders();
+})();
 
 </script>
 </body>
