@@ -537,6 +537,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       <div class="month-select-row">
         <select id="editYear"></select>
         <select id="editMonth"></select>
+        <span id="loadEditBadge" style="display:none;font-family:var(--mono);font-size:0.65rem;color:var(--accent-water);background:rgba(13,143,106,0.1);border:1px solid rgba(13,143,106,0.25);border-radius:4px;padding:2px 8px;">先月から引用</span>
         <button class="save-btn" id="saveBtn" onclick="saveMonth()">保存</button>
         <button class="save-btn btn-test" id="testBtn" onclick="fillTestData()">テスト入力</button>
         <button class="save-btn btn-clear" id="clearTestBtn" onclick="clearTestData()" style="display:none">クリア</button>
@@ -865,14 +866,21 @@ function loadEdit() {
   const y = +document.getElementById('editYear').value;
   const m = +document.getElementById('editMonth').value;
   const all = getAll();
-  const found = all.find(d => d.y === y && d.m === m) || {};
+  const found = all.find(d => d.y === y && d.m === m);
+  // 該当月がなければ直前月のデータをデフォルトとして使う（メモはクリア）
+  const prevMonth = all.slice().reverse().find(d => d.y < y || (d.y === y && d.m < m));
+  const base = found || (prevMonth ? { ...prevMonth, memo: '' } : {});
+  const isNew = !found;
   const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_comm','par_pay'];
   fields.forEach(f => {
     const el = document.getElementById('e_'+f);
-    if (el) el.value = found[f] !== undefined ? found[f] || '' : '';
+    if (el) el.value = base[f] !== undefined ? base[f] || '' : '';
   });
   const memoEl = document.getElementById('e_memo');
-  if (memoEl) memoEl.value = found.memo || '';
+  if (memoEl) memoEl.value = base.memo || '';
+  // 新規月は「先月から引用」バッジを表示
+  const badge = document.getElementById('loadEditBadge');
+  if (badge) { badge.style.display = isNew && prevMonth ? '' : 'none'; }
   document.querySelectorAll('.adder-sum').forEach(el => el.textContent = '');
   document.querySelectorAll('.adder-input').forEach(el => el.value = '');
   document.querySelectorAll('.adder-label-input').forEach(el => el.value = '');
