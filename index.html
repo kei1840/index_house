@@ -293,6 +293,38 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
   color: rgba(107,79,216,0.6); text-align: right;
   margin-top: 1px; min-height: 0.8rem;
 }
+.adder-label-input {
+  flex: 1.4; min-width: 0;
+  font-family: var(--sans); font-size: 0.72rem;
+  padding: 3px 7px;
+  background: var(--bg);
+  border: 1px dashed rgba(196,122,16,0.35);
+  border-radius: 4px;
+  color: var(--text);
+}
+.adder-label-input:focus { outline: none; border-color: rgba(196,122,16,0.7); }
+.adder-label-input::placeholder { color: rgba(138,138,150,0.45); }
+.food-items-list {
+  margin-top: 6px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.food-item-row {
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--mono); font-size: 0.68rem;
+  background: rgba(196,122,16,0.07);
+  border-radius: 4px; padding: 2px 8px;
+  color: var(--text);
+}
+.food-item-row .fi-label { color: var(--muted); margin-right: 6px; }
+.food-item-del {
+  cursor: pointer; color: var(--muted); font-size: 0.7rem; padding: 0 2px;
+  background: none; border: none; line-height: 1;
+}
+.food-item-del:hover { color: var(--accent-kei); }
+.food-breakdown {
+  font-family: var(--mono); font-size: 0.65rem; color: var(--muted);
+  margin-top: 4px; line-height: 1.7;
+}
 
 .settle-preview {
   display: flex; align-items: center; gap: 2rem;
@@ -561,6 +593,10 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <label>KeiがMizに渡す額</label>
         <div class="val settle-highlight" id="prev-settle">—</div>
         <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-top:2px" id="prev-settle-note">—</div>
+      </div>
+      <div id="food-preview-wrap" style="display:none;flex-basis:100%;margin-top:0.5rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+        <div style="font-family:var(--mono);font-size:0.63rem;color:var(--accent-food);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">雑費 内訳（¥10,000以上）</div>
+        <div id="food-preview-list" class="food-breakdown"></div>
       </div>
     </div>
   </div>
@@ -839,6 +875,11 @@ function loadEdit() {
   if (memoEl) memoEl.value = found.memo || '';
   document.querySelectorAll('.adder-sum').forEach(el => el.textContent = '');
   document.querySelectorAll('.adder-input').forEach(el => el.value = '');
+  document.querySelectorAll('.adder-label-input').forEach(el => el.value = '');
+  foodItems = [];
+  document.querySelectorAll('.food-items-list').forEach(el => el.innerHTML = '');
+  const fpw = document.getElementById('food-preview-wrap');
+  if (fpw) fpw.style.display = 'none';
   updatePreview();
 }
 
@@ -1173,17 +1214,68 @@ function clearTestData() {
   document.getElementById('testBtn').style.display = '';
 }
 
+let foodItems = []; // {val, label}
+
+function renderFoodItems(mainInput) {
+  const listEl = mainInput.parentNode.querySelector('.food-items-list');
+  if (!listEl) return;
+  listEl.innerHTML = foodItems.map((item, i) =>
+    `<div class="food-item-row">
+      <span><span class="fi-label">${item.label || '（未入力）'}</span>¥${fmt(item.val)}</span>
+      <button class="food-item-del" onclick="removeFoodItem(${i})">✕</button>
+    </div>`
+  ).join('');
+  // 精算プレビューの内訳
+  const total = parseFloat(mainInput.value) || 0;
+  const wrap = document.getElementById('food-preview-wrap');
+  const previewList = document.getElementById('food-preview-list');
+  if (wrap && previewList) {
+    if (total >= 10000 && foodItems.length > 0) {
+      wrap.style.display = '';
+      previewList.innerHTML = foodItems.map(it =>
+        `<span style="color:var(--accent-food)">¥${fmt(it.val)}</span> ${it.label || '未入力'}`
+      ).join('&emsp;/&emsp;');
+    } else if (total >= 10000) {
+      wrap.style.display = '';
+      previewList.textContent = `¥${fmt(total)}（費目未入力）`;
+    } else {
+      wrap.style.display = 'none';
+    }
+  }
+}
+
+function removeFoodItem(i) {
+  const input = document.getElementById('e_food');
+  const removed = foodItems.splice(i, 1)[0];
+  input.value = Math.max(0, (parseFloat(input.value) || 0) - removed.val);
+  input.dispatchEvent(new Event('input'));
+  renderFoodItems(input);
+}
+
 function setupAdders() {
   document.querySelectorAll('.edit-grid .field input[type="number"]').forEach(input => {
+    const isFood = input.id === 'e_food';
     const row = document.createElement('div');
     row.className = 'adder-row';
-    row.innerHTML = `<input type="number" class="adder-input" placeholder="＋追加金額"><button class="adder-btn" type="button">+</button>`;
+    if (isFood) {
+      row.innerHTML = `<input type="text" class="adder-label-input" placeholder="費目（例: スーパー）"><input type="number" class="adder-input" placeholder="金額"><button class="adder-btn" type="button">+</button>`;
+    } else {
+      row.innerHTML = `<input type="number" class="adder-input" placeholder="＋追加金額"><button class="adder-btn" type="button">+</button>`;
+    }
     const sumEl = document.createElement('div');
     sumEl.className = 'adder-sum';
     input.after(row);
     row.after(sumEl);
 
+    // 雑費は費目リストも追加
+    if (isFood) {
+      const listEl = document.createElement('div');
+      listEl.className = 'food-items-list';
+      sumEl.after(listEl);
+    }
+
     const adderInput = row.querySelector('.adder-input');
+    const labelInput = row.querySelector('.adder-label-input');
     const adderBtn = row.querySelector('.adder-btn');
 
     const add = () => {
@@ -1191,13 +1283,19 @@ function setupAdders() {
       if (!val) return;
       const current = parseFloat(input.value) || 0;
       input.value = Math.round(current + val);
+      if (isFood) {
+        foodItems.push({ val: Math.round(val), label: labelInput ? labelInput.value.trim() : '' });
+        if (labelInput) labelInput.value = '';
+        renderFoodItems(input);
+      }
       adderInput.value = '';
       input.dispatchEvent(new Event('input'));
-      sumEl.textContent = `合計 ¥${fmt(parseFloat(input.value))}`;
+      if (!isFood) sumEl.textContent = `合計 ¥${fmt(parseFloat(input.value))}`;
     };
 
     adderBtn.addEventListener('click', add);
     adderInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+    if (labelInput) labelInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adderInput.focus(); } });
   });
 }
 
