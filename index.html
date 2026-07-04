@@ -590,6 +590,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <button onclick="showAddCustomField()" style="font-family:var(--mono);font-size:0.68rem;padding:2px 10px;background:rgba(107,79,216,0.1);border:1px solid rgba(107,79,216,0.25);border-radius:4px;color:var(--accent-settle);cursor:pointer;line-height:1.6">＋ 項目追加</button>
       </div>
       <div id="custom-fields-grid" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-start;min-height:1rem"></div>
+      <div id="hidden-fields-restore" style="display:none;margin-top:0.5rem;display:flex;flex-wrap:wrap;gap:4px;align-items:center"></div>
       <div id="add-custom-form" style="display:none;margin-top:0.6rem;padding:0.75rem;background:var(--surface2);border-radius:6px;border:1px solid var(--border)">
         <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
           <input type="text" id="cf-new-label" placeholder="項目名（例: ジム代）"
@@ -715,6 +716,73 @@ function loadCustomFields() {
 }
 function saveCustomFieldsDefs() { localStorage.setItem(CF_KEY, JSON.stringify(customFields)); }
 loadCustomFields();
+
+const HIDDEN_KEY = 'household_hidden_fields';
+let hiddenFields = new Set();
+function loadHiddenFields() {
+  try { hiddenFields = new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]')); } catch(e) { hiddenFields = new Set(); }
+}
+function saveHiddenFields() { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hiddenFields])); }
+loadHiddenFields();
+
+const FIELD_LABELS = {
+  elec:'電気ガス', water:'水道', food:'雑費', food_par:'父母食費',
+  rent:'家賃', netflix:'Netflix', nhk:'NHK', youtube:'YouTube',
+  apple:'Apple', net:'ネット', miz_other:'Miz臨時', kei_other:'Kei臨時',
+  par_comm:'電話・新聞(父)', par_pay:'父母支払', memo:'メモ'
+};
+
+function applyHiddenFields() {
+  document.querySelectorAll('.edit-grid .field').forEach(fieldDiv => {
+    const input = fieldDiv.querySelector('input');
+    if (!input) return;
+    const fid = (input.id || '').replace('e_', '');
+    fieldDiv.style.display = hiddenFields.has(fid) ? 'none' : '';
+  });
+  renderHiddenFieldsRestore();
+}
+
+function hideField(fid) {
+  hiddenFields.add(fid);
+  saveHiddenFields();
+  applyHiddenFields();
+}
+
+function restoreField(fid) {
+  hiddenFields.delete(fid);
+  saveHiddenFields();
+  applyHiddenFields();
+}
+
+function renderHiddenFieldsRestore() {
+  const el = document.getElementById('hidden-fields-restore');
+  if (!el) return;
+  if (hiddenFields.size === 0) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = `<span style="font-family:var(--mono);font-size:0.63rem;color:var(--muted);margin-right:6px">非表示中:</span>` +
+    [...hiddenFields].map(id =>
+      `<button onclick="restoreField('${id}')" style="font-family:var(--mono);font-size:0.63rem;padding:2px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--muted)">↩ ${FIELD_LABELS[id]||id}</button>`
+    ).join(' ');
+}
+
+function setupFieldDeleteButtons() {
+  document.querySelectorAll('.edit-grid .field').forEach(fieldDiv => {
+    const input = fieldDiv.querySelector('input');
+    if (!input) return;
+    const fid = (input.id || '').replace('e_', '');
+    const label = fieldDiv.querySelector('label');
+    if (!label) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = '✕';
+    btn.title = 'この項目を非表示';
+    btn.style.cssText = 'background:none;border:none;color:rgba(138,138,150,0.4);cursor:pointer;font-size:0.6rem;padding:0 0 0 4px;line-height:1;vertical-align:middle;transition:color 0.1s';
+    btn.onmouseover = () => btn.style.color = 'var(--accent-kei)';
+    btn.onmouseout = () => btn.style.color = 'rgba(138,138,150,0.4)';
+    btn.onclick = () => { if (confirm(`「${FIELD_LABELS[fid]||fid}」を非表示にしますか？`)) hideField(fid); };
+    label.appendChild(btn);
+  });
+}
 
 function calcSettle(d) {
   let mizTotal = d.rent + d.net + d.miz_other;
@@ -1505,7 +1573,8 @@ function setupAdders() {
 (() => {
   document.getElementById('lock').style.display = 'none';
   document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
-  setupEditDropdowns(); setupAdders(); renderCustomFieldsUI(); loadEdit();
+  setupEditDropdowns(); setupAdders(); setupFieldDeleteButtons(); applyHiddenFields();
+  renderCustomFieldsUI(); loadEdit();
   updateMetrics(); updateTable(); initCharts(); initDonut(); updateInsights();
 })();
 
