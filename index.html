@@ -547,7 +547,13 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
     <div class="edit-grid">
       <div>
         <div class="edit-col-title">水道・光熱</div>
-        <div class="field"><label>電気・ガス (Kei払)</label><input type="number" id="e_elec" placeholder="0"></div>
+        <div class="field">
+          <label>電気・ガス (Kei払)
+            <a href="https://mypage.energy.rakuten.co.jp/contracts/top?sn=denki&cn=8077358392" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:0.58rem;color:var(--accent-kei);background:rgba(192,51,94,0.08);border:1px solid rgba(192,51,94,0.2);border-radius:3px;padding:1px 5px;margin-left:5px;text-decoration:none;white-space:nowrap">楽天でんき ↗</a>
+            <a href="https://members.tokyo-gas.co.jp/top" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:0.58rem;color:var(--accent-elec);background:rgba(26,111,196,0.08);border:1px solid rgba(26,111,196,0.2);border-radius:3px;padding:1px 5px;margin-left:3px;text-decoration:none;white-space:nowrap">東京ガス ↗</a>
+          </label>
+          <input type="number" id="e_elec" placeholder="0">
+        </div>
         <div class="field"><label>水道 (Kei払)</label><input type="number" id="e_water" placeholder="0"></div>
       </div>
       <div>
