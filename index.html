@@ -629,6 +629,10 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <div style="font-family:var(--mono);font-size:0.63rem;color:var(--accent-food);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">雑費 内訳（¥10,000以上）</div>
         <div id="food-preview-list" class="food-breakdown"></div>
       </div>
+      <div id="expense-rank-wrap" style="flex-basis:100%;margin-top:0.5rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+        <div style="font-family:var(--mono);font-size:0.63rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">今月の支出ランキング</div>
+        <div id="expense-rank-list" style="display:flex;flex-wrap:wrap;gap:4px 1.5rem"></div>
+      </div>
     </div>
   </div>
 
@@ -939,14 +943,17 @@ function loadEdit() {
   document.querySelectorAll('.adder-sum').forEach(el => el.textContent = '');
   document.querySelectorAll('.adder-input').forEach(el => el.value = '');
   document.querySelectorAll('.adder-label-input').forEach(el => el.value = '');
-  foodItems = [];
-  // 保存済みの費目を復元
-  if (found && found.food_items) {
-    try { foodItems = JSON.parse(found.food_items); } catch(e) { foodItems = []; }
-  }
+  foodItems = []; keiOtherItems = []; mizOtherItems = [];
+  if (found && found.food_items) { try { foodItems = JSON.parse(found.food_items); } catch(e) {} }
+  if (found && found.kei_other_items) { try { keiOtherItems = JSON.parse(found.kei_other_items); } catch(e) {} }
+  if (found && found.miz_other_items) { try { mizOtherItems = JSON.parse(found.miz_other_items); } catch(e) {} }
   document.querySelectorAll('.food-items-list').forEach(el => el.innerHTML = '');
   const foodInputEl = document.getElementById('e_food');
   if (foodInputEl) renderFoodItems(foodInputEl);
+  const keiOtherEl = document.getElementById('e_kei_other');
+  if (keiOtherEl) renderNamedItems(keiOtherEl, keiOtherItems, 'removeKeiOtherItem');
+  const mizOtherEl = document.getElementById('e_miz_other');
+  if (mizOtherEl) renderNamedItems(mizOtherEl, mizOtherItems, 'removeMizOtherItem');
   const fpw = document.getElementById('food-preview-wrap');
   if (!foodItems.length && fpw) fpw.style.display = 'none';
   // カスタム項目の値を復元
@@ -984,6 +991,40 @@ function updatePreview() {
   const afterKei = keiTotal - d.par_pay + settle;
   const noteEl = document.getElementById('prev-settle-note');
   if (noteEl) noteEl.textContent = `精算後 → Miz ¥${fmt(afterMiz)} / Kei ¥${fmt(afterKei)}（均等化）`;
+
+  // 支出ランキング
+  const rankEl = document.getElementById('expense-rank-list');
+  if (rankEl) {
+    const g2 = id => +document.getElementById(id)?.value || 0;
+    const items = [
+      { label: '家賃', val: d.rent, payer: 'Miz' },
+      { label: '父母食費', val: g2('e_food_par') || 70000, payer: '父母' },
+      { label: '電気ガス', val: d.elec, payer: 'Kei' },
+      { label: '水道', val: d.water, payer: 'Kei' },
+      { label: '雑費', val: d.food, payer: 'Kei', items: foodItems },
+      { label: 'ネット', val: d.net, payer: 'Miz' },
+      { label: 'Netflix', val: d.netflix, payer: 'Kei' },
+      { label: 'NHK', val: d.nhk, payer: 'Kei' },
+      { label: 'YouTube', val: d.youtube, payer: 'Kei' },
+      { label: 'Apple', val: d.apple, payer: 'Kei' },
+      { label: '電話・新聞(父)', val: d.par_comm, payer: 'Kei' },
+      ...keiOtherItems.map(it => ({ label: it.label || 'Kei臨時', val: it.val, payer: 'Kei' })),
+      ...mizOtherItems.map(it => ({ label: it.label || 'Miz臨時', val: it.val, payer: 'Miz' })),
+      ...customFields.map(cf => ({ label: cf.label, val: d[cf.id]||0, payer: cf.payer==='kei'?'Kei':'Miz' })),
+    ].filter(i => i.val > 0).sort((a, b) => b.val - a.val);
+
+    rankEl.innerHTML = items.map((it, idx) => {
+      const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}.`;
+      const sub = it.items && it.items.length > 0
+        ? `<span style="color:var(--accent-food);font-size:0.58rem"> (${it.items.map(fi=>fi.label||'?').join('/')})</span>` : '';
+      return `<div style="font-family:var(--mono);font-size:0.72rem;white-space:nowrap">
+        <span style="margin-right:3px">${medal}</span>
+        <span style="color:var(--text)">${it.label}</span>${sub}
+        <span style="color:var(--muted);margin-left:4px;font-size:0.65rem">(${it.payer})</span>
+        <span style="color:var(--text);font-weight:500;margin-left:5px">¥${fmt(it.val)}</span>
+      </div>`;
+    }).join('');
+  }
 }
 
 ['e_elec','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_net','e_miz_other','e_kei_other','e_par_comm','e_par_pay'].forEach(id => {
@@ -1001,6 +1042,8 @@ function saveMonth() {
   const obj = { memo };
   fields.forEach(f => { const v = g('e_'+f); if (v !== undefined) obj[f] = v; });
   obj.food_items = foodItems.length > 0 ? JSON.stringify(foodItems) : '';
+  obj.kei_other_items = keiOtherItems.length > 0 ? JSON.stringify(keiOtherItems) : '';
+  obj.miz_other_items = mizOtherItems.length > 0 ? JSON.stringify(mizOtherItems) : '';
   customFields.forEach(cf => { const v = g('e_'+cf.id); if (v !== undefined) obj[cf.id] = v; });
 
   overrides[key] = obj;
@@ -1342,17 +1385,23 @@ function removeCustomField(id) {
 }
 
 let foodItems = []; // {val, label}
+let keiOtherItems = []; // {val, label}
+let mizOtherItems = []; // {val, label}
 
-function renderFoodItems(mainInput) {
+// 名前付きitem汎用レンダラー
+function renderNamedItems(mainInput, items, removeFnName) {
   const listEl = mainInput.parentNode.querySelector('.food-items-list');
   if (!listEl) return;
-  listEl.innerHTML = foodItems.map((item, i) =>
+  listEl.innerHTML = items.map((item, i) =>
     `<div class="food-item-row">
-      <span><span class="fi-label">${item.label || '（未入力）'}</span>¥${fmt(item.val)}</span>
-      <button class="food-item-del" onclick="removeFoodItem(${i})">✕</button>
+      <span><span class="fi-label">${item.label || '（名前なし）'}</span>¥${fmt(item.val)}</span>
+      <button class="food-item-del" onclick="${removeFnName}(${i})">✕</button>
     </div>`
   ).join('');
-  // 精算プレビューの内訳
+}
+
+function renderFoodItems(mainInput) {
+  renderNamedItems(mainInput, foodItems, 'removeFoodItem');
   const total = parseFloat(mainInput.value) || 0;
   const wrap = document.getElementById('food-preview-wrap');
   const previewList = document.getElementById('food-preview-list');
@@ -1379,13 +1428,31 @@ function removeFoodItem(i) {
   renderFoodItems(input);
 }
 
+function removeKeiOtherItem(i) {
+  const input = document.getElementById('e_kei_other');
+  const removed = keiOtherItems.splice(i, 1)[0];
+  input.value = Math.max(0, (parseFloat(input.value) || 0) - removed.val);
+  input.dispatchEvent(new Event('input'));
+  renderNamedItems(input, keiOtherItems, 'removeKeiOtherItem');
+}
+
+function removeMizOtherItem(i) {
+  const input = document.getElementById('e_miz_other');
+  const removed = mizOtherItems.splice(i, 1)[0];
+  input.value = Math.max(0, (parseFloat(input.value) || 0) - removed.val);
+  input.dispatchEvent(new Event('input'));
+  renderNamedItems(input, mizOtherItems, 'removeMizOtherItem');
+}
+
 function setupAdders() {
   document.querySelectorAll('.edit-grid .field input[type="number"]').forEach(input => {
     const isFood = input.id === 'e_food';
+    const isOther = input.id === 'e_kei_other' || input.id === 'e_miz_other';
     const row = document.createElement('div');
     row.className = 'adder-row';
-    if (isFood) {
-      row.innerHTML = `<input type="text" class="adder-label-input" placeholder="費目（例: スーパー）"><input type="number" class="adder-input" placeholder="金額"><button class="adder-btn" type="button">+</button>`;
+    if (isFood || isOther) {
+      const ph = isFood ? '費目（例: スーパー）' : '名前（例: コンサート）';
+      row.innerHTML = `<input type="text" class="adder-label-input" placeholder="${ph}"><input type="number" class="adder-input" placeholder="金額"><button class="adder-btn" type="button">+</button>`;
     } else {
       row.innerHTML = `<input type="number" class="adder-input" placeholder="＋追加金額"><button class="adder-btn" type="button">+</button>`;
     }
@@ -1394,8 +1461,7 @@ function setupAdders() {
     input.after(row);
     row.after(sumEl);
 
-    // 雑費は費目リストも追加
-    if (isFood) {
+    if (isFood || isOther) {
       const listEl = document.createElement('div');
       listEl.className = 'food-items-list';
       sumEl.after(listEl);
@@ -1410,14 +1476,24 @@ function setupAdders() {
       if (!val) return;
       const current = parseFloat(input.value) || 0;
       input.value = Math.round(current + val);
+      const labelVal = labelInput ? labelInput.value.trim() : '';
       if (isFood) {
-        foodItems.push({ val: Math.round(val), label: labelInput ? labelInput.value.trim() : '' });
+        foodItems.push({ val: Math.round(val), label: labelVal });
         if (labelInput) labelInput.value = '';
         renderFoodItems(input);
+      } else if (input.id === 'e_kei_other') {
+        keiOtherItems.push({ val: Math.round(val), label: labelVal });
+        if (labelInput) labelInput.value = '';
+        renderNamedItems(input, keiOtherItems, 'removeKeiOtherItem');
+      } else if (input.id === 'e_miz_other') {
+        mizOtherItems.push({ val: Math.round(val), label: labelVal });
+        if (labelInput) labelInput.value = '';
+        renderNamedItems(input, mizOtherItems, 'removeMizOtherItem');
+      } else {
+        sumEl.textContent = `合計 ¥${fmt(parseFloat(input.value))}`;
       }
       adderInput.value = '';
       input.dispatchEvent(new Event('input'));
-      if (!isFood) sumEl.textContent = `合計 ¥${fmt(parseFloat(input.value))}`;
     };
 
     adderBtn.addEventListener('click', add);
