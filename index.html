@@ -548,11 +548,16 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       <div>
         <div class="edit-col-title">水道・光熱</div>
         <div class="field">
-          <label>電気・ガス (Kei払)
+          <label>電気代 (Kei払)
             <a href="https://mypage.energy.rakuten.co.jp/contracts/top?sn=denki&cn=8077358392" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:0.58rem;color:var(--accent-kei);background:rgba(192,51,94,0.08);border:1px solid rgba(192,51,94,0.2);border-radius:3px;padding:1px 5px;margin-left:5px;text-decoration:none;white-space:nowrap">楽天でんき ↗</a>
-            <a href="https://members.tokyo-gas.co.jp/top" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:0.58rem;color:var(--accent-elec);background:rgba(26,111,196,0.08);border:1px solid rgba(26,111,196,0.2);border-radius:3px;padding:1px 5px;margin-left:3px;text-decoration:none;white-space:nowrap">東京ガス ↗</a>
           </label>
           <input type="number" id="e_elec" placeholder="0">
+        </div>
+        <div class="field">
+          <label>ガス代 (Kei払)
+            <a href="https://members.tokyo-gas.co.jp/top" target="_blank" rel="noopener" style="font-family:var(--mono);font-size:0.58rem;color:var(--accent-elec);background:rgba(26,111,196,0.08);border:1px solid rgba(26,111,196,0.2);border-radius:3px;padding:1px 5px;margin-left:5px;text-decoration:none;white-space:nowrap">東京ガス ↗</a>
+          </label>
+          <input type="number" id="e_gas" placeholder="0">
         </div>
         <div class="field"><label>水道 (Kei払)</label><input type="number" id="e_water" placeholder="0"></div>
       </div>
@@ -716,7 +721,7 @@ function saveHiddenFields() { localStorage.setItem(HIDDEN_KEY, JSON.stringify([.
 loadHiddenFields();
 
 const FIELD_LABELS = {
-  elec:'電気ガス', water:'水道', food:'雑費', food_par:'父母食費',
+  elec:'電気代', gas:'ガス代', water:'水道', food:'雑費', food_par:'父母食費',
   rent:'家賃', netflix:'Netflix', nhk:'NHK', youtube:'YouTube',
   apple:'Apple', net:'ネット',
   par_comm:'電話・新聞(父)', par_pay:'父母支払', memo:'メモ'
@@ -775,8 +780,8 @@ function setupFieldDeleteButtons() {
 }
 
 function calcSettle(d) {
-  let mizTotal = d.rent + d.net + (d.miz_other||0);
-  let keiTotal = d.elec + d.water + d.food + d.netflix + d.nhk + d.youtube + d.apple + (d.kei_other||0) + (d.par_comm||0);
+  let mizTotal = d.rent + d.net;
+  let keiTotal = d.elec + (d.gas||0) + d.water + d.food + d.netflix + d.nhk + d.youtube + d.apple + (d.par_comm||0);
   // 臨時支出（月ごと）
   let rinji = [];
   if (Array.isArray(d.rinji_items)) rinji = d.rinji_items;
@@ -802,7 +807,7 @@ function getAll() {
       const [y, m] = k.split('-').map(Number);
       return { y, m, elec:0, water:0, food:0, food_par:70000, rent:150000,
         net:6000, netflix:0, nhk:0, youtube:0, apple:0,
-        kei_other:0, miz_other:0, par_comm:10000, par_pay:130000, memo:'', ...v };
+        gas:0, par_comm:10000, par_pay:130000, memo:'', ...v };
     });
   return [...seedRows, ...extraRows].sort((a,b) => a.y !== b.y ? a.y - b.y : a.m - b.m);
 }
@@ -841,7 +846,7 @@ function initCharts() {
   };
 
   mkLine('chartMain', [
-    { label: '合計支出', data: data.map(d => d.rent+d.food+d.food_par+d.water+d.elec+d.net), borderColor: '#6b4fd8', backgroundColor: 'rgba(107,79,216,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#6b4fd8', borderWidth: 1.5 },
+    { label: '合計支出', data: data.map(d => d.rent+d.food+d.food_par+d.water+d.elec+(d.gas||0)+d.net), borderColor: '#6b4fd8', backgroundColor: 'rgba(107,79,216,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#6b4fd8', borderWidth: 1.5 },
     { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#c0335e', backgroundColor: 'rgba(192,51,94,0.04)', fill: false, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c0335e', borderWidth: 1.5, borderDash: [4,3] },
   ]);
 
@@ -851,7 +856,7 @@ function initCharts() {
     data: {
       labels,
       datasets: [
-        { label: '電気ガス', data: data.map(d => d.elec), backgroundColor: 'rgba(26,111,196,0.75)', borderColor: '#1a6fc4', borderWidth: 0 },
+        { label: '電気ガス', data: data.map(d => d.elec+(d.gas||0)), backgroundColor: 'rgba(26,111,196,0.75)', borderColor: '#1a6fc4', borderWidth: 0 },
         { label: '水道', data: data.map(d => d.water), backgroundColor: 'rgba(13,143,106,0.75)', borderColor: '#0d8f6a', borderWidth: 0 },
         { label: '雑費', data: data.map(d => d.food), backgroundColor: 'rgba(196,122,16,0.75)', borderColor: '#c47a10', borderWidth: 0 },
       ]
@@ -889,15 +894,17 @@ function updateMetrics() {
     el.className = 'metric-delta ' + (d > 0 ? 'delta-up' : 'delta-dn');
   };
 
-  const avgElec = Math.round(last12.reduce((s,d) => s+d.elec, 0) / last12.length);
+  const avgElec = Math.round(last12.reduce((s,d) => s+d.elec+(d.gas||0), 0) / last12.length);
   const waterMonths = last12.filter(d => d.water > 0);
   const avgWater = waterMonths.length ? Math.round(waterMonths.reduce((s,d) => s+d.water, 0) / waterMonths.length) : 0;
   const avgFood = Math.round(last12.reduce((s,d) => s+d.food, 0) / last12.length);
-  const avgTotal = Math.round(last12.reduce((s,d) => s+d.rent+d.food+d.food_par+d.water+d.elec+d.net, 0) / last12.length);
+  const avgTotal = Math.round(last12.reduce((s,d) => s+d.rent+d.food+d.food_par+d.water+d.elec+(d.gas||0)+d.net, 0) / last12.length);
 
-  document.getElementById('m-elec').innerHTML = `${fmt(latest.elec)}<span>円</span>`;
+  const latestElecGas = latest.elec + (latest.gas||0);
+  const prevElecGas = prev ? prev.elec + (prev.gas||0) : undefined;
+  document.getElementById('m-elec').innerHTML = `${fmt(latestElecGas)}<span>円</span>`;
   document.getElementById('m-elec-avg').textContent = `12ヶ月平均 ¥${fmt(avgElec)}`;
-  delta(latest.elec, prev?.elec, document.getElementById('m-elec-delta'));
+  delta(latestElecGas, prevElecGas, document.getElementById('m-elec-delta'));
 
   document.getElementById('m-water').innerHTML = latest.water > 0 ? `${fmt(latest.water)}<span>円</span>` : `—<span>（非請求月）</span>`;
   document.getElementById('m-water-avg').textContent = `有月平均 ¥${fmt(avgWater)}`;
@@ -907,7 +914,7 @@ function updateMetrics() {
   document.getElementById('m-food-avg').textContent = `12ヶ月平均 ¥${fmt(avgFood)}`;
   delta(latest.food, prev?.food, document.getElementById('m-food-delta'));
 
-  const latestTotal = latest.rent + latest.food + latest.food_par + latest.water + latest.elec + latest.net;
+  const latestTotal = latest.rent + latest.food + latest.food_par + latest.water + latest.elec + (latest.gas||0) + latest.net;
   document.getElementById('m-total').innerHTML = `${fmt(latestTotal)}<span>円</span>`;
   document.getElementById('m-total-avg').textContent = `12ヶ月平均 ¥${fmt(avgTotal)}`;
 
@@ -923,10 +930,9 @@ function updateMetrics() {
     sDeltaEl.className = 'metric-delta ' + (sd > 0 ? 'delta-up' : 'delta-dn');
     // 要因分析
     const reasons = [];
-    const ed = latest.elec - prev.elec, fd = latest.food - prev.food, od = (latest.kei_other||0) - (prev.kei_other||0);
-    if (Math.abs(ed) > 2000) reasons.push(`電気${ed>0?'↑':'↓'}¥${fmt(Math.abs(ed))}`);
+    const ed = (latest.elec+(latest.gas||0)) - (prev.elec+(prev.gas||0)), fd = latest.food - prev.food;
+    if (Math.abs(ed) > 2000) reasons.push(`電気・ガス${ed>0?'↑':'↓'}¥${fmt(Math.abs(ed))}`);
     if (Math.abs(fd) > 2000) reasons.push(`雑費${fd>0?'↑':'↓'}¥${fmt(Math.abs(fd))}`);
-    if (Math.abs(od) > 2000) reasons.push(`臨時${od>0?'↑':'↓'}¥${fmt(Math.abs(od))}`);
     document.getElementById('m-settle-reason').textContent = reasons.length ? `要因: ${reasons.join(' / ')}` : '';
   }
 }
@@ -944,13 +950,15 @@ function updateTable() {
     const foodCell = foodItemsArr.length > 0
       ? `¥${fmt(d.food)} <span title="${foodTip}" style="cursor:help;color:var(--accent-food);font-size:0.62rem;border-bottom:1px dotted var(--accent-food)">内訳▸</span>`
       : `¥${fmt(d.food)}`;
-    // カスタム項目合計
-    let cfTotal = 0;
-    customFields.forEach(cf => { cfTotal += d[cf.id] || 0; });
-    const total = d.rent+d.food+d.food_par+d.water+d.elec+d.net+cfTotal;
+    let rinjiTotal = 0;
+    let dRinji = [];
+    if (Array.isArray(d.rinji_items)) dRinji = d.rinji_items;
+    else if (d.rinji_items) { try { dRinji = JSON.parse(d.rinji_items); } catch(e) {} }
+    dRinji.forEach(it => { rinjiTotal += it.val || 0; });
+    const total = d.rent+d.food+d.food_par+d.water+d.elec+(d.gas||0)+d.net+rinjiTotal;
     html += `<tr>
       <td>${fmtLabel(d)}</td>
-      <td>${d.elec ? `¥${fmt(d.elec)}` : '<span class="zero">—</span>'}</td>
+      <td>${(d.elec||(d.gas||0)) ? `¥${fmt(d.elec+(d.gas||0))}` : '<span class="zero">—</span>'}</td>
       <td>${d.water ? `¥${fmt(d.water)}` : '<span class="zero">—</span>'}</td>
       <td>${foodCell}</td>
       <td>¥${fmt(d.net)}</td>
@@ -991,7 +999,7 @@ function loadEdit() {
   const prevMonth = all.slice().reverse().find(d => d.y < y || (d.y === y && d.m < m));
   const base = found || (prevMonth ? { ...prevMonth, memo: '' } : {});
   const isNew = !found;
-  const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'];
+  const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'];
   fields.forEach(f => {
     const el = document.getElementById('e_'+f);
     if (el) el.value = base[f] !== undefined ? base[f] || '' : '';
@@ -1021,15 +1029,14 @@ function updatePreview() {
   const d = {
     rent: g('e_rent') || 150000,
     net: g('e_net') || 6000,
-    miz_other: 0,
     elec: g('e_elec'),
+    gas: g('e_gas'),
     water: g('e_water'),
     food: g('e_food'),
     netflix: g('e_netflix'),
     nhk: g('e_nhk'),
     youtube: g('e_youtube'),
     apple: g('e_apple'),
-    kei_other: 0,
     par_comm: g('e_par_comm') || 10000,
     par_pay: g('e_par_pay') || 130000,
     rinji_items: rinjiItems,
@@ -1051,7 +1058,8 @@ function updatePreview() {
     const items = [
       { label: '家賃', val: d.rent, payer: 'Miz' },
       { label: '父母食費', val: g2('e_food_par') || 70000, payer: '父母' },
-      { label: '電気ガス', val: d.elec, payer: 'Kei' },
+      { label: '電気代', val: d.elec, payer: 'Kei' },
+      { label: 'ガス代', val: d.gas, payer: 'Kei' },
       { label: '水道', val: d.water, payer: 'Kei' },
       { label: '雑費', val: d.food, payer: 'Kei', items: foodItems },
       { label: 'ネット', val: d.net, payer: 'Miz' },
@@ -1077,7 +1085,7 @@ function updatePreview() {
   }
 }
 
-['e_elec','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_net','e_miz_other','e_kei_other','e_par_comm','e_par_pay'].forEach(id => {
+['e_elec','e_gas','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_net','e_par_comm','e_par_pay'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', updatePreview);
 });
@@ -1088,7 +1096,7 @@ function saveMonth() {
   const key = `${y}-${m}`;
   const g = id => { const v = document.getElementById(id)?.value; return v !== '' ? +v : undefined; };
   const memo = document.getElementById('e_memo')?.value || '';
-  const fields = ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'];
+  const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'];
   const obj = { memo };
   fields.forEach(f => { const v = g('e_'+f); if (v !== undefined) obj[f] = v; });
   obj.food_items = foodItems.length > 0 ? JSON.stringify(foodItems) : '';
@@ -1117,12 +1125,17 @@ function initDonut() {
     { label: '電話・新聞(父)', val: d.par_comm||0, color: '#888' },
   ].filter(i => i.val > 0);
 
+  let dRinjiItems = [];
+  if (Array.isArray(d.rinji_items)) dRinjiItems = d.rinji_items;
+  else if (d.rinji_items) { try { dRinjiItems = JSON.parse(d.rinji_items); } catch(e) {} }
+  const rinjiTotal = dRinjiItems.reduce((s,it) => s+(it.val||0), 0);
+
   const variable = [
-    { label: '電気ガス', val: d.elec, color: '#1a6fc4' },
+    { label: '電気代', val: d.elec, color: '#1a6fc4' },
+    { label: 'ガス代', val: d.gas||0, color: '#3a8fd4' },
     { label: '水道', val: d.water, color: '#0d8f6a' },
     { label: '雑費', val: d.food, color: '#c47a10' },
-    { label: 'Kei臨時', val: d.kei_other||0, color: '#c0335e' },
-    { label: 'Miz臨時', val: d.miz_other||0, color: '#e07090' },
+    { label: '臨時支出', val: rinjiTotal, color: '#c0335e' },
   ].filter(i => i.val > 0);
 
   const totalFixed = fixed.reduce((s,i) => s+i.val, 0);
@@ -1173,8 +1186,8 @@ function updateInsights() {
   const settle = d => calcSettle(d).settle;
 
   // 前年同月比: 電気ガス
-  const prevSamePeriodElec = prev12.length ? avg(prev12, d => d.elec) : null;
-  const curAvgElec = avg(last12, d => d.elec);
+  const prevSamePeriodElec = prev12.length ? avg(prev12, d => d.elec+(d.gas||0)) : null;
+  const curAvgElec = avg(last12, d => d.elec+(d.gas||0));
   const elecYoy = prevSamePeriodElec ? Math.round((curAvgElec - prevSamePeriodElec) / prevSamePeriodElec * 100) : null;
 
   // 精算額トレンド: 直近3ヶ月平均 vs 12ヶ月平均
@@ -1205,7 +1218,7 @@ function updateInsights() {
   // 追加インサイト
   const annualSettle = last12.reduce((s,d) => s + settle(d), 0);
   const fixedMonthly = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
-  const elecPeak = [...last12].sort((a,b) => b.elec - a.elec)[0];
+  const elecPeak = [...last12].sort((a,b) => (b.elec+(b.gas||0)) - (a.elec+(a.gas||0)))[0];
 
   const items = [
     {
@@ -1259,7 +1272,7 @@ function updateInsights() {
     {
       cls: 'up',
       label: '電気代ピーク月（直近12ヶ月）',
-      val: `¥${fmt(elecPeak.elec)}`,
+      val: `¥${fmt(elecPeak.elec+(elecPeak.gas||0))}`,
       sub: `${fmtLabel(elecPeak)}${elecPeak.memo ? ' ／ ' + elecPeak.memo : ''}`
     },
     // こなし夫婦スタイル追加インサイト
@@ -1275,7 +1288,8 @@ function updateInsights() {
     (() => {
       // 節約余地アラート: 直近月が12ヶ月平均を20%以上超えているカテゴリ
       const alerts = [];
-      if (latest.elec > curAvgElec * 1.2) alerts.push(`電気+${Math.round((latest.elec/curAvgElec-1)*100)}%`);
+      const latestEG = latest.elec+(latest.gas||0);
+      if (latestEG > curAvgElec * 1.2) alerts.push(`電気・ガス+${Math.round((latestEG/curAvgElec-1)*100)}%`);
       if (latest.food > curAvgFood * 1.2) alerts.push(`雑費+${Math.round((latest.food/curAvgFood-1)*100)}%`);
       if (latest.water > 0 && avgWater > 0 && latest.water > avgWater * 1.2) alerts.push(`水道+${Math.round((latest.water/avgWater-1)*100)}%`);
       return {
@@ -1287,7 +1301,7 @@ function updateInsights() {
     })(),
     (() => {
       const totalFixed = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
-      const totalAll = latest.rent + latest.food + latest.food_par + latest.water + latest.elec + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0) + (latest.kei_other||0) + (latest.miz_other||0);
+      const totalAll = latest.rent + latest.food + latest.food_par + latest.water + latest.elec + (latest.gas||0) + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
       const fixedRatio = Math.round(totalFixed / totalAll * 100);
       return {
         cls: fixedRatio > 70 ? 'up' : 'neutral',
@@ -1341,7 +1355,7 @@ function fillTestData() {
 
   // バックアップ
   const backup = {};
-  ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_comm','par_pay'].forEach(f => {
+  ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'].forEach(f => {
     const el = document.getElementById('e_'+f);
     if (el) backup[f] = el.value;
   });
@@ -1350,12 +1364,11 @@ function fillTestData() {
 
   // テストデータ入力（±20%）
   const testVals = {
-    elec: rnd(base.elec, 20), water: rnd(base.water, 20),
+    elec: rnd(base.elec, 20), gas: rnd(base.gas||0, 20), water: rnd(base.water, 20),
     food: rnd(base.food, 20), food_par: base.food_par,
     rent: base.rent, netflix: base.netflix,
     nhk: base.nhk, youtube: base.youtube, apple: base.apple,
-    net: base.net, miz_other: rnd(base.miz_other||0, 20),
-    kei_other: rnd(base.kei_other||0, 20),
+    net: base.net,
     par_comm: base.par_comm||10000, par_pay: base.par_pay||130000,
   };
   Object.entries(testVals).forEach(([f, v]) => {
@@ -1370,7 +1383,7 @@ function fillTestData() {
 
 function clearTestData() {
   const backup = JSON.parse(sessionStorage.getItem(TEST_KEY) || '{}');
-  ['elec','water','food','food_par','rent','netflix','nhk','youtube','apple','net','miz_other','kei_other','par_comm','par_pay'].forEach(f => {
+  ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'].forEach(f => {
     const el = document.getElementById('e_'+f);
     if (el) el.value = backup[f] ?? '';
   });
@@ -1401,6 +1414,15 @@ function renderRinjiItems() {
   ).join('');
 }
 
+function autoSaveRinji() {
+  const y = +document.getElementById('editYear').value;
+  const m = +document.getElementById('editMonth').value;
+  const key = `${y}-${m}`;
+  if (!overrides[key]) overrides[key] = {};
+  overrides[key].rinji_items = rinjiItems.length > 0 ? JSON.stringify(rinjiItems) : '';
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e) {}
+}
+
 function addRinjiItem() {
   const label = document.getElementById('rinji-label').value.trim();
   const val = parseFloat(document.getElementById('rinji-val').value);
@@ -1411,12 +1433,14 @@ function addRinjiItem() {
   document.getElementById('rinji-val').value = '';
   renderRinjiItems();
   updatePreview();
+  autoSaveRinji();
 }
 
 function removeRinjiItem(i) {
   rinjiItems.splice(i, 1);
   renderRinjiItems();
   updatePreview();
+  autoSaveRinji();
 }
 
 // 臨時入力欄でEnterキー対応
