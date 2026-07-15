@@ -703,6 +703,7 @@ const SEED = [
   {y:2026,m:1,elec:63707,water:0,food:30604,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:2,elec:61400,water:0,food:12660,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:3,elec:49656,water:15100,food:30021,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
+  {y:2026,m:7,elec:12000,gas:5000,water:0,food:18000,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,par_comm:10000,par_pay:130000,memo:''},
 ];
 
 const STORAGE_KEY = 'household_v2';
@@ -813,6 +814,7 @@ function getAll() {
 }
 
 function fmt(v) { return Math.round(v).toLocaleString('ja-JP'); }
+function fmtSettle(v) { return v < 0 ? `-¥${fmt(Math.abs(v))}` : `¥${fmt(v)}`; }
 function fmtLabel(d) { return `${d.y}/${String(d.m).padStart(2,'0')}`; }
 
 function chartDefaults() {
@@ -920,7 +922,7 @@ function updateMetrics() {
 
   const { settle } = calcSettle(latest);
   const prevSettle = prev ? calcSettle(prev).settle : null;
-  document.getElementById('m-settle').innerHTML = `${fmt(settle)}<span>円</span>`;
+  document.getElementById('m-settle').innerHTML = `${fmtSettle(settle)}<span></span>`;
   document.getElementById('m-settle-month').textContent = `最新月 ${fmtLabel(latest)}`;
   if (prevSettle !== null) {
     const sd = settle - prevSettle;
@@ -963,7 +965,7 @@ function updateTable() {
       <td>${foodCell}</td>
       <td>¥${fmt(d.net)}</td>
       <td>¥${fmt(total)}</td>
-      <td class="highlight">¥${fmt(settle)}</td>
+      <td class="highlight">${fmtSettle(settle)}</td>
       <td style="color:var(--muted); font-size:0.68rem">${d.memo||''}</td>
     </tr>`;
   });
@@ -1045,7 +1047,7 @@ function updatePreview() {
   document.getElementById('prev-miz').textContent = `¥${fmt(mizTotal)}`;
   document.getElementById('prev-kei').textContent = `¥${fmt(keiTotal)}`;
   document.getElementById('prev-diff').textContent = `¥${fmt(diff)}`;
-  document.getElementById('prev-settle').textContent = `¥${fmt(settle)}`;
+  document.getElementById('prev-settle').textContent = fmtSettle(settle);
   const afterMiz = mizTotal - settle;
   const afterKei = keiTotal - d.par_pay + settle;
   const noteEl = document.getElementById('prev-settle-note');
@@ -1248,13 +1250,13 @@ function updateInsights() {
     {
       cls: 'up',
       label: '精算額 最高月（直近12ヶ月）',
-      val: `¥${fmt(settle(maxSettle))}`,
+      val: fmtSettle(settle(maxSettle)),
       sub: `${fmtLabel(maxSettle)}${maxSettle.memo ? ' ／ ' + maxSettle.memo : ''}`
     },
     {
       cls: 'dn',
       label: '精算額 最低月（直近12ヶ月）',
-      val: `¥${fmt(settle(minSettle))}`,
+      val: fmtSettle(settle(minSettle)),
       sub: `${fmtLabel(minSettle)}${minSettle.memo ? ' ／ ' + minSettle.memo : ''}`
     },
     {
