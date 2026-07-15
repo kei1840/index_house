@@ -709,6 +709,8 @@ const SEED = [
 const STORAGE_KEY = 'household_v2';
 let overrides = {};
 try { overrides = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){}
+// テスト時に誤って保存されたダミーデータを削除
+if (overrides['2026-7']) { delete overrides['2026-7']; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e){} }
 
 // 臨時支出（月ごとのitemリスト）
 let rinjiItems = []; // {label, val, payer:'kei'|'miz'}
