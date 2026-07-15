@@ -1454,6 +1454,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let foodItems = []; // {val, label}
 
+function renderNamedItems(mainInput, items, removeFnName) {
+  const listEl = mainInput.closest('.field')?.querySelector('.food-items-list') ||
+    mainInput.parentElement?.querySelector('.food-items-list');
+  if (!listEl) return;
+  listEl.innerHTML = items.map((it, i) =>
+    `<div class="food-item-row">
+      <span class="fi-label">${it.label || '未入力'}</span>
+      <span style="color:var(--accent-food);margin-left:4px">¥${fmt(it.val)}</span>
+      <button class="food-item-del" onclick="${removeFnName}(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
 function renderFoodItems(mainInput) {
   renderNamedItems(mainInput, foodItems, 'removeFoodItem');
   const total = parseFloat(mainInput.value) || 0;
