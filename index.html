@@ -626,11 +626,14 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <div class="field"><label>NHK</label><input type="number" id="e_nhk" placeholder="0"></div>
         <div class="field"><label>YouTube</label><input type="number" id="e_youtube" placeholder="0"></div>
         <div class="field"><label>Apple</label><input type="number" id="e_apple" placeholder="0"></div>
+        <div class="field"><label>ABEMA</label><input type="number" id="e_abema" placeholder="1180"></div>
       </div>
       <div>
         <div class="edit-col-title">その他</div>
         <div class="field"><label>ネット (Miz払)</label><input type="number" id="e_net" placeholder="6000"></div>
-        <div class="field"><label>電話・新聞（父母）Kei払</label><input type="number" id="e_par_comm" placeholder="10000"></div>
+        <div class="field"><label>新聞 (Kei払)</label><input type="number" id="e_newspaper" placeholder="5000"></div>
+        <div class="field"><label>楽天モバイル (Kei払)</label><input type="number" id="e_rakuten_mobile" placeholder="5000"></div>
+        <div class="field"><label>旧まとめ：電話・新聞 (Kei払)</label><input type="number" id="e_par_comm" placeholder="0"></div>
         <div class="field"><label>父母支払分 (手入力)</label><input type="number" id="e_par_pay" placeholder="130000"></div>
       </div>
       <div>
@@ -774,12 +777,27 @@ const SEED = [
   {y:2026,m:2,elec:61400,water:0,food:12660,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:3,elec:49656,water:15100,food:30021,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:6,elec:31190,gas:7595,water:13860,food:40360,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,par_comm:10000,par_pay:250000,memo:'特記事項',rinji_items:'[{"label":"家更新","val":209000,"payer":"kei"},{"label":"火災保険","val":24000,"payer":"kei"}]'},
-  {y:2026,m:7,elec:0,gas:0,water:0,food:0,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,par_comm:10000,par_pay:130000,memo:''},
+  {y:2026,m:7,elec:0,gas:0,water:0,food:0,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,abema:1180,newspaper:5000,rakuten_mobile:5000,par_comm:0,par_pay:130000,memo:''},
 ];
 
 const STORAGE_KEY = 'household_v2';
 let overrides = {};
 try { overrides = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){}
+// 旧「電話・新聞 10,000円」を2026/07以降は新聞と楽天モバイルへ分割。
+let migratedSplitCosts = false;
+Object.entries(overrides).forEach(([key, values]) => {
+  if (!values || typeof values !== 'object') return;
+  const [year, month] = key.split('-').map(Number);
+  const isSplitPeriod = year > 2026 || (year === 2026 && month >= 7);
+  if (!isSplitPeriod) return;
+  if (Number(values.par_comm) === 10000) { values.par_comm = 0; migratedSplitCosts = true; }
+  if (values.abema === undefined) { values.abema = 1180; migratedSplitCosts = true; }
+  if (values.newspaper === undefined) { values.newspaper = 5000; migratedSplitCosts = true; }
+  if (values.rakuten_mobile === undefined) { values.rakuten_mobile = 5000; migratedSplitCosts = true; }
+});
+if (migratedSplitCosts) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e) {}
+}
 
 // 臨時支出（月ごとのitemリスト）
 let rinjiItems = []; // {label, val, payer:'kei'|'miz'}
@@ -795,8 +813,9 @@ loadHiddenFields();
 const FIELD_LABELS = {
   elec:'電気代', gas:'ガス代', water:'水道', food:'雑費', food_par:'父母食費',
   rent:'家賃', netflix:'Netflix', nhk:'NHK', youtube:'YouTube',
-  apple:'Apple', net:'ネット',
-  par_comm:'電話・新聞(父)', par_pay:'父母支払', memo:'メモ'
+  apple:'Apple', abema:'ABEMA', net:'ネット', newspaper:'新聞',
+  rakuten_mobile:'楽天モバイル', par_comm:'旧まとめ：電話・新聞',
+  par_pay:'父母支払', memo:'メモ'
 };
 
 function applyHiddenFields() {
@@ -879,7 +898,7 @@ function rinjiTotal(d) {
 
 // 世帯から外へ出る支出の総額。父母から受け取るpar_payは収入なので含めない。
 function totalExpense(d) {
-  return ['rent','net','elec','gas','water','food','food_par','netflix','nhk','youtube','apple','par_comm']
+  return ['rent','net','elec','gas','water','food','food_par','netflix','nhk','youtube','apple','abema','newspaper','rakuten_mobile','par_comm']
     .reduce((sum, key) => sum + Math.max(0, num(d[key])), 0) + rinjiTotal(d);
 }
 
@@ -1080,7 +1099,8 @@ function setupPdfAttachments() {
 function calcSettle(d) {
   let mizTotal = num(d.rent) + num(d.net);
   let keiTotal = num(d.elec) + num(d.gas) + num(d.water) + num(d.food) +
-    num(d.netflix) + num(d.nhk) + num(d.youtube) + num(d.apple) + num(d.par_comm);
+    num(d.netflix) + num(d.nhk) + num(d.youtube) + num(d.apple) + num(d.abema) +
+    num(d.newspaper) + num(d.rakuten_mobile) + num(d.par_comm);
   // 臨時支出（月ごと）
   const rinji = parseItems(d.rinji_items);
   rinji.forEach(it => {
@@ -1116,7 +1136,8 @@ function getAll() {
     const defaults = previous
       ? { ...previous, memo:'', food_items:'', rinji_items:'' }
       : { elec:0, gas:0, water:0, food:0, food_par:70000, rent:150000,
-          net:6000, netflix:0, nhk:0, youtube:0, apple:0,
+          net:6000, netflix:0, nhk:0, youtube:0, apple:0, abema:0,
+          newspaper:0, rakuten_mobile:0,
           par_comm:10000, par_pay:130000, memo:'', food_items:'', rinji_items:'' };
     previous = { ...defaults, ...values, y: row.y, m: row.m };
     return previous;
@@ -1327,7 +1348,7 @@ function loadEdit() {
   const prevMonth = all.slice().reverse().find(d => d.y < y || (d.y === y && d.m < m));
   const base = found || (prevMonth ? { ...prevMonth, memo: '' } : {});
   const isNew = !found;
-  const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'];
+  const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','abema','net','newspaper','rakuten_mobile','par_comm','par_pay'];
   fields.forEach(f => {
     const el = document.getElementById('e_'+f);
     if (el) el.value = base[f] !== undefined ? base[f] || '' : '';
@@ -1359,7 +1380,7 @@ function formNumber(id, fallback = 0) {
 }
 
 function readFormData() {
-  const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'];
+  const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','abema','net','newspaper','rakuten_mobile','par_comm','par_pay'];
   const data = { memo: document.getElementById('e_memo')?.value || '' };
   fields.forEach(field => { data[field] = formNumber(`e_${field}`); });
   data.food_items = foodItems.length ? JSON.stringify(foodItems) : '';
@@ -1379,7 +1400,10 @@ function updatePreview() {
     nhk: formNumber('e_nhk'),
     youtube: formNumber('e_youtube'),
     apple: formNumber('e_apple'),
-    par_comm: formNumber('e_par_comm', 10000),
+    abema: formNumber('e_abema'),
+    newspaper: formNumber('e_newspaper'),
+    rakuten_mobile: formNumber('e_rakuten_mobile'),
+    par_comm: formNumber('e_par_comm'),
     par_pay: formNumber('e_par_pay', 130000),
     rinji_items: rinjiItems,
   };
@@ -1408,7 +1432,10 @@ function updatePreview() {
       { label: 'NHK', val: d.nhk, payer: 'Kei' },
       { label: 'YouTube', val: d.youtube, payer: 'Kei' },
       { label: 'Apple', val: d.apple, payer: 'Kei' },
-      { label: '電話・新聞(父)', val: d.par_comm, payer: 'Kei' },
+      { label: 'ABEMA', val: d.abema, payer: 'Kei' },
+      { label: '新聞', val: d.newspaper, payer: 'Kei' },
+      { label: '楽天モバイル', val: d.rakuten_mobile, payer: 'Kei' },
+      { label: '旧まとめ：電話・新聞', val: d.par_comm, payer: 'Kei' },
       ...rinjiItems.map(it => ({ label: it.label || '臨時', val: it.val, payer: it.payer === 'kei' ? 'Kei' : 'Miz' })),
     ].filter(i => i.val > 0).sort((a, b) => b.val - a.val);
 
@@ -1426,7 +1453,7 @@ function updatePreview() {
   }
 }
 
-['e_elec','e_gas','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_net','e_par_comm','e_par_pay'].forEach(id => {
+['e_elec','e_gas','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_abema','e_net','e_newspaper','e_rakuten_mobile','e_par_comm','e_par_pay'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', updatePreview);
 });
@@ -1465,7 +1492,10 @@ function initDonut() {
     { label: 'NHK', val: d.nhk, color: '#4a90d9' },
     { label: 'YouTube', val: d.youtube, color: '#ff0000' },
     { label: 'Apple', val: d.apple, color: '#555' },
-    { label: '電話・新聞(父)', val: d.par_comm||0, color: '#888' },
+    { label: 'ABEMA', val: d.abema||0, color: '#00a7e1' },
+    { label: '新聞', val: d.newspaper||0, color: '#7b8794' },
+    { label: '楽天モバイル', val: d.rakuten_mobile||0, color: '#bf0000' },
+    { label: '旧まとめ：電話・新聞', val: d.par_comm||0, color: '#888' },
   ].filter(i => i.val > 0);
 
   const dRinjiItems = parseItems(d.rinji_items);
@@ -1559,7 +1589,8 @@ function updateInsights() {
 
   // 追加インサイト
   const annualSettle = last12.reduce((s,d) => s + settle(d), 0);
-  const fixedMonthly = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
+  const fixedMonthly = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple +
+    (latest.abema||0) + (latest.newspaper||0) + (latest.rakuten_mobile||0) + (latest.par_comm||0);
   const elecPeak = [...last12].sort((a,b) => (b.elec+(b.gas||0)) - (a.elec+(a.gas||0)))[0];
 
   const items = [
@@ -1609,7 +1640,7 @@ function updateInsights() {
       cls: 'up',
       label: '固定費合計（最新月）',
       val: `¥${fmt(fixedMonthly)}`,
-      sub: `家賃・ネット・サブスク・電話新聞`
+      sub: `家賃・ネット・サブスク・新聞・楽天モバイル`
     },
     {
       cls: 'up',
@@ -1619,12 +1650,12 @@ function updateInsights() {
     },
     // こなし夫婦スタイル追加インサイト
     (() => {
-      const subMonthly = Math.round(avg(last12, d => d.netflix + d.nhk + d.youtube + d.apple));
+      const subMonthly = Math.round(avg(last12, d => d.netflix + d.nhk + d.youtube + d.apple + (d.abema||0)));
       return {
         cls: 'up',
         label: 'サブスク 年換算（12ヶ月平均）',
         val: `¥${fmt(subMonthly * 12)}`,
-        sub: `月平均¥${fmt(subMonthly)}（Netflix・NHK・YouTube・Apple）`
+        sub: `月平均¥${fmt(subMonthly)}（Netflix・NHK・YouTube・Apple・ABEMA）`
       };
     })(),
     (() => {
@@ -1642,7 +1673,8 @@ function updateInsights() {
       };
     })(),
     (() => {
-      const totalFixed = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
+      const totalFixed = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple +
+        (latest.abema||0) + (latest.newspaper||0) + (latest.rakuten_mobile||0) + (latest.par_comm||0);
       const totalAll = totalExpense(latest);
       const fixedRatio = totalAll ? Math.round(totalFixed / totalAll * 100) : 0;
       return {
@@ -1697,7 +1729,7 @@ function fillTestData() {
 
   // バックアップ
   const backup = {};
-  ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'].forEach(f => {
+  ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','abema','net','newspaper','rakuten_mobile','par_comm','par_pay'].forEach(f => {
     const el = document.getElementById('e_'+f);
     if (el) backup[f] = el.value;
   });
@@ -1709,9 +1741,10 @@ function fillTestData() {
     elec: rnd(base.elec, 20), gas: rnd(base.gas||0, 20), water: rnd(base.water, 20),
     food: rnd(base.food, 20), food_par: base.food_par,
     rent: base.rent, netflix: base.netflix,
-    nhk: base.nhk, youtube: base.youtube, apple: base.apple,
+    nhk: base.nhk, youtube: base.youtube, apple: base.apple, abema: base.abema||0,
     net: base.net,
-    par_comm: base.par_comm||10000, par_pay: base.par_pay||130000,
+    newspaper: base.newspaper||0, rakuten_mobile: base.rakuten_mobile||0,
+    par_comm: base.par_comm ?? 0, par_pay: base.par_pay||130000,
   };
   Object.entries(testVals).forEach(([f, v]) => {
     const el = document.getElementById('e_'+f);
@@ -1725,7 +1758,7 @@ function fillTestData() {
 
 function clearTestData() {
   const backup = JSON.parse(sessionStorage.getItem(TEST_KEY) || '{}');
-  ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'].forEach(f => {
+  ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','abema','net','newspaper','rakuten_mobile','par_comm','par_pay'].forEach(f => {
     const el = document.getElementById('e_'+f);
     if (el) el.value = backup[f] ?? '';
   });
