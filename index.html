@@ -6,7 +6,7 @@
 <title>家計ダッシュボード</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 #lock {
   position: fixed; inset: 0; background: #f4f4f0;
@@ -512,6 +512,235 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
   .pdf-row { flex-wrap: wrap; }
   .pdf-info { flex-basis: calc(100% - 2rem); }
 }
+
+/* CODEX EDITORIAL REDESIGN */
+:root {
+  --bg: #efede4;
+  --surface: #faf8f0;
+  --surface2: #e8e5da;
+  --border: rgba(20,23,19,0.17);
+  --text: #141713;
+  --muted: #65695f;
+  --accent-elec: #3159c8;
+  --accent-water: #187454;
+  --accent-food: #d27a21;
+  --accent-kei: #f05b43;
+  --accent-settle: #c7ff36;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Zen Kaku Gothic New', 'Space Grotesk', sans-serif;
+  --display: 'Space Grotesk', 'Zen Kaku Gothic New', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(rgba(20,23,19,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,23,19,.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  font-weight: 400;
+}
+button, input, select, textarea { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible { outline: 3px solid #6a8c18; outline-offset: 3px; }
+
+header.site-header {
+  min-height: 72px; padding: 0 3vw; background: #151812; color: #fff;
+  border: 0; display: flex; justify-content: space-between; align-items: center;
+}
+.brand { display: flex; align-items: center; gap: .85rem; }
+.brand-mark {
+  display: grid; place-items: center; width: 36px; height: 36px;
+  color: #151812; background: var(--accent-settle); font: 700 .72rem var(--display);
+  letter-spacing: -.04em; border-radius: 50%;
+}
+.brand-name { display: block; font: 600 .9rem var(--display); letter-spacing: -.02em; }
+.brand-sub { display: block; color: rgba(255,255,255,.48); font: 400 .54rem var(--mono); letter-spacing: .12em; }
+.nav-meta { display: flex; align-items: center; gap: 1.1rem; }
+header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem var(--mono); }
+.header-action {
+  padding: .68rem 1.05rem; border-radius: 99px; background: var(--accent-settle);
+  color: #151812; font: 500 .62rem var(--mono); letter-spacing: .03em;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.header-action:hover { opacity: 1; transform: translateY(-2px); box-shadow: 0 7px 0 rgba(199,255,54,.18); }
+.storage-notice {
+  display: flex; align-items: center; gap: .85rem; padding: .55rem 3vw;
+  color: rgba(255,255,255,.62); background: #24281f; border: 0;
+  font: 400 .57rem var(--mono); letter-spacing: .01em;
+}
+.storage-notice strong { color: var(--accent-settle); letter-spacing: .12em; font-weight: 500; }
+
+.dashboard {
+  width: min(1480px, 100%); margin: 0 auto; padding: 1.35rem 3vw 5rem;
+  gap: 1.15rem; overflow: clip;
+}
+.hero {
+  grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1.45fr) minmax(360px,.55fr);
+  min-height: 520px; overflow: hidden; background: #151812; color: #fff;
+  border-radius: 26px; position: relative; isolation: isolate;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; opacity: .28;
+  background: radial-gradient(circle at 28% 35%, rgba(199,255,54,.23), transparent 32%),
+    repeating-linear-gradient(115deg, transparent 0 48px, rgba(255,255,255,.045) 49px 50px);
+}
+.hero-copy { padding: clamp(2.2rem,5vw,5.5rem); display: flex; flex-direction: column; justify-content: center; }
+.hero-eyebrow { color: var(--accent-settle); font: 500 .67rem var(--mono); letter-spacing: .16em; }
+.hero h1 {
+  max-width: 850px; margin: 1.2rem 0 1.25rem; font: 900 clamp(3.2rem,6vw,7.3rem)/.9 var(--sans);
+  letter-spacing: -.075em; text-wrap: balance;
+}
+.hero h1 em { color: var(--accent-settle); font-style: normal; }
+.hero-lead { max-width: 590px; color: rgba(255,255,255,.66); font-size: .92rem; line-height: 1.9; }
+.hero-actions { display: flex; align-items: center; gap: 1rem; margin-top: 2rem; flex-wrap: wrap; }
+.hero-cta {
+  border: 0; background: var(--accent-settle); color: #151812; padding: 1rem 1.45rem;
+  border-radius: 99px; cursor: pointer; font: 700 .72rem var(--mono); letter-spacing: .02em;
+}
+.hero-cta:hover { transform: translateY(-2px); }
+.hero-caption { color: rgba(255,255,255,.45); font: 400 .6rem var(--mono); }
+.hero-foot { display: flex; gap: 2.5rem; margin-top: auto; padding-top: 2.2rem; }
+.hero-foot div { display: grid; gap: .25rem; }
+.hero-foot b { font: 600 1.2rem var(--display); }
+.hero-foot span { color: rgba(255,255,255,.42); font: 400 .55rem var(--mono); letter-spacing: .08em; }
+.hero-settlement {
+  margin: 1.2rem; padding: clamp(1.8rem,3vw,3rem); background: var(--accent-settle); color: #151812;
+  border-radius: 18px; display: flex; flex-direction: column; justify-content: space-between;
+  position: relative; overflow: hidden;
+}
+.hero-settlement::after {
+  content: '¥'; position: absolute; right: -1.5rem; bottom: -5.8rem;
+  font: 700 18rem/.8 var(--display); color: rgba(21,24,18,.075); pointer-events: none;
+}
+.hero-index { font: 500 .62rem var(--mono); letter-spacing: .14em; }
+.hero-month { margin-top: .75rem; font: 600 clamp(3rem,5vw,5.6rem)/1 var(--display); letter-spacing: -.07em; }
+.hero-label { margin-top: auto; padding-top: 2rem; font: 500 .65rem var(--mono); }
+.hero-value { margin-top: .35rem; font: 700 clamp(2.3rem,4.2vw,4.8rem)/.95 var(--display); letter-spacing: -.06em; }
+.hero-rule { height: 1px; margin: 1.5rem 0; background: rgba(21,24,18,.3); }
+.hero-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.hero-stat span { font: 400 .6rem var(--mono); }
+.hero-stat b { font: 600 1.05rem var(--display); }
+.hero-status { margin-top: 1rem; font: 500 .62rem var(--mono); padding: .55rem .7rem; border: 1px solid rgba(21,24,18,.3); }
+
+.section-heading {
+  grid-column: 1 / -1; display: grid; grid-template-columns: 74px minmax(0,1fr) minmax(230px,.42fr);
+  gap: 1rem; align-items: end; padding: 3.3rem 0 1rem; border-bottom: 1px solid #151812;
+}
+.section-number { font: 500 .62rem var(--mono); color: var(--muted); }
+.section-heading h2 { font: 700 clamp(1.8rem,3vw,3.4rem)/1 var(--display); letter-spacing: -.055em; }
+.section-heading p { color: var(--muted); font-size: .74rem; line-height: 1.75; }
+
+.metrics-row { gap: 0; border: 1px solid #151812; background: var(--surface); }
+.metric-card {
+  min-height: 154px; padding: 1.25rem; background: transparent; border: 0; border-right: 1px solid var(--border);
+  border-radius: 0; display: flex; flex-direction: column; justify-content: space-between;
+}
+.metric-card:last-child { border-right: 0; }
+.metric-card::before { display: none; }
+.metric-card.settle { background: #151812; border: 0; }
+.metric-card.settle .metric-label, .metric-card.settle .metric-sub { color: rgba(255,255,255,.55); }
+.metric-card.settle .metric-value { color: var(--accent-settle); }
+.metric-card.settle #m-settle-reason { color: rgba(255,255,255,.5) !important; }
+.metric-label { margin: 0; color: var(--muted); font-size: .57rem; }
+.metric-value { font: 600 clamp(1.35rem,2vw,2.1rem)/1 var(--display); letter-spacing: -.05em; }
+.metric-sub, .metric-delta { font-size: .55rem; }
+
+.edit-panel {
+  border: 2px solid #151812; border-radius: 0; padding: 1.6rem; background: var(--surface);
+  box-shadow: 12px 12px 0 rgba(20,23,19,.11);
+}
+.edit-header {
+  margin: -1.6rem -1.6rem 1.5rem; padding: 1rem 1.25rem; top: 0;
+  color: #151812; background: rgba(199,255,54,.96); border: 0; border-bottom: 2px solid #151812;
+  border-radius: 0; backdrop-filter: blur(12px);
+}
+.edit-header h2 { color: #151812; font: 700 .82rem var(--display); letter-spacing: -.01em; text-transform: none; }
+.month-select-row select { padding: .55rem .8rem; background: #fff; border: 1px solid #151812; border-radius: 0; }
+.completion-state, .save-state { border-radius: 99px; border: 1px solid rgba(21,24,18,.34); background: rgba(255,255,255,.45); color: #151812; }
+.save-state.complete { color: #151812; background: #fff; }
+.save-btn { padding: .62rem 1rem; border-radius: 0; background: #151812; color: #fff; }
+.save-btn:hover { opacity: 1; transform: translateY(-1px); }
+.btn-secondary { background: transparent !important; color: #151812 !important; border-color: #151812 !important; }
+.advanced-tools summary { color: #151812; }
+.edit-col-title { color: #151812; border-bottom-color: #151812; font-size: .58rem; }
+.field { margin-bottom: .8rem; }
+.field label { color: #51564d; font-size: .68rem; font-weight: 500; }
+.field input, .field textarea {
+  padding: .68rem .72rem; background: #fff; border: 1px solid rgba(20,23,19,.28); border-radius: 0;
+}
+.field input:focus, .field textarea:focus { border-color: #151812; box-shadow: inset 4px 0 0 var(--accent-settle); }
+.adder-input, .adder-label-input { background: transparent; border-radius: 0; border-color: rgba(20,23,19,.28); }
+.adder-btn, #rinji-add-btn { border-radius: 0 !important; background: #151812 !important; color: #fff !important; border-color: #151812 !important; }
+.pdf-drop-zone { min-height: 96px; border-radius: 0; border-color: rgba(20,23,19,.35); background: #f3f0e6; }
+.pdf-drop-zone:hover, .pdf-drop-zone.dragover { border-color: #151812; background: rgba(199,255,54,.25); }
+.settle-preview { margin: 1.5rem -1.6rem -1.6rem; padding: 1.4rem 1.6rem; border-top: 2px solid #151812; background: #151812; color: #fff; }
+.settle-item label, .food-breakdown { color: rgba(255,255,255,.55); }
+.settle-highlight { color: var(--accent-settle); }
+.settle-preview [style*="color:var(--muted)"] { color: rgba(255,255,255,.55) !important; }
+
+.card, .insights-card { border-radius: 0; border: 1px solid var(--border); background: rgba(250,248,240,.86); }
+.card-title { color: #151812; font-size: .61rem; }
+.chart-main { border-top: 5px solid #151812; }
+.chart-util { border-top: 5px solid var(--accent-elec); }
+.chart-food { border-top: 5px solid var(--accent-food); }
+.chart-settle { border-top: 5px solid var(--accent-kei); }
+.chart-donut { border-top: 5px solid var(--accent-water); }
+.insights-card { border: 2px solid #151812; }
+.insight-item { border-radius: 0; background: #e8e5da; border-left-width: 6px; }
+.table-card { margin-top: 1.6rem; border-top: 5px solid #151812; }
+.draft-badge { border-radius: 0; color: #151812; background: var(--accent-settle); }
+.closing-strip {
+  grid-column: 1 / -1; margin-top: 2.4rem; padding: clamp(2rem,5vw,4.8rem);
+  background: var(--accent-settle); color: #151812; display: flex; align-items: end;
+  justify-content: space-between; gap: 2rem; border: 2px solid #151812;
+}
+.closing-strip span { font: 500 .62rem var(--mono); letter-spacing: .12em; }
+.closing-strip h2 { max-width: 790px; margin-top: .7rem; font: 900 clamp(2.2rem,5vw,5.6rem)/.92 var(--sans); letter-spacing: -.07em; }
+.closing-strip .hero-cta { flex: none; background: #151812; color: #fff; }
+
+@keyframes editorial-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.hero-copy, .hero-settlement { animation: editorial-rise .7s cubic-bezier(.2,.7,.2,1) both; }
+.hero-settlement { animation-delay: .1s; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+@media (max-width: 1100px) {
+  .hero { grid-template-columns: 1fr .7fr; min-height: 480px; }
+  .edit-grid { grid-template-columns: repeat(3, 1fr); }
+  .metrics-row { grid-template-columns: repeat(3, 1fr); }
+  .metric-card { border-bottom: 1px solid var(--border); }
+  .metric-card.settle { grid-column: span 2; }
+}
+@media (max-width: 760px) {
+  header.site-header { min-height: 60px; padding: 0 1rem; }
+  .brand-sub, header.site-header #headerDate { display: none; }
+  .header-action { padding: .58rem .8rem; font-size: .56rem; }
+  .storage-notice { padding: .5rem 1rem; line-height: 1.5; }
+  .dashboard { padding: .75rem .75rem 3rem; gap: .8rem; }
+  .hero { grid-template-columns: 1fr; border-radius: 16px; min-height: 0; }
+  .hero-copy { padding: 2.2rem 1.35rem 1.5rem; }
+  .hero h1 { font-size: clamp(3rem,15vw,4.8rem); }
+  .hero-lead { font-size: .78rem; }
+  .hero-foot { gap: 1.4rem; }
+  .hero-settlement { min-height: 330px; margin: .65rem; padding: 1.45rem; }
+  .section-heading { grid-template-columns: 42px 1fr; padding-top: 2.6rem; }
+  .section-heading p { grid-column: 2; }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  .metric-card { min-height: 135px; }
+  .metric-card:nth-child(even) { border-right: 0; }
+  .metric-card.settle { grid-column: 1 / -1; min-height: 150px; }
+  .edit-panel { padding: 1rem; box-shadow: 6px 6px 0 rgba(20,23,19,.12); }
+  .edit-header { margin: -1rem -1rem 1.2rem; padding: .8rem; position: static; }
+  .edit-grid { grid-template-columns: 1fr; }
+  .month-select-row { gap: .4rem; }
+  .month-select-row select { flex: 1; }
+  .completion-state, .save-state { order: 3; }
+  #saveBtn { flex: 1; }
+  .settle-preview { margin: 1.2rem -1rem -1rem; padding: 1.15rem 1rem; }
+  .chart-wrap.h240 { height: 220px; }
+  .closing-strip { align-items: flex-start; flex-direction: column; }
+}
 </style>
 </head>
 <body>
@@ -524,15 +753,55 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
   </div>
 </div>
 
-<header>
-  <h1>家計ダッシュボード</h1>
-  <span id="headerDate"></span>
-  <button type="button" class="header-action" id="jumpToEdit">7月分を入力</button>
-  <span style="font-family:var(--mono);font-size:0.7rem;color:rgba(107,79,216,0.5);margin-left:auto">kei1840</span>
+<header class="site-header">
+  <div class="brand">
+    <span class="brand-mark">KH</span>
+    <span><span class="brand-name">KEI HOUSEHOLD</span><span class="brand-sub">MONTHLY MONEY RECORD</span></span>
+  </div>
+  <div class="nav-meta">
+    <span id="headerDate"></span>
+    <button type="button" class="header-action" id="jumpToEdit">7月を締める ↘</button>
+  </div>
 </header>
-<div class="storage-notice">入力内容とPDFはこの端末に保存されます。GitHub上の履歴へは自動同期されません。月末にバックアップを書き出してください。</div>
+<div class="storage-notice"><strong>LOCAL FIRST</strong><span>入力内容とPDFはこの端末に保存。月末にバックアップを書き出すと安心です。</span></div>
 
 <div class="dashboard">
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <span class="hero-eyebrow">HOUSEHOLD OS / KEI + MIZ + FAMILY</span>
+      <h1 id="hero-title">暮らしの数字を、<em>ひとつに。</em></h1>
+      <p class="hero-lead">毎月の支払い、家族分、ふたりの精算まで。散らばる数字を一度だけ入力して、次の月を少し軽くする家計の記録です。</p>
+      <div class="hero-actions">
+        <button type="button" class="hero-cta js-jump-edit">今月を入力する →</button>
+        <span class="hero-caption">DRAFT AUTO-SAVED / PDF READY</span>
+      </div>
+      <div class="hero-foot">
+        <div><b>38</b><span>MONTHS RECORDED</span></div>
+        <div><b>4</b><span>PEOPLE TOGETHER</span></div>
+        <div><b>1</b><span>MONTHLY CLOSE</span></div>
+      </div>
+    </div>
+    <aside class="hero-settlement" aria-label="最新確定月の概要">
+      <div>
+        <span class="hero-index">LATEST / CLOSED</span>
+        <div class="hero-month" id="heroLatestMonth">—</div>
+      </div>
+      <div>
+        <div class="hero-label">KEI → MIZ / 精算額</div>
+        <div class="hero-value" id="heroSettle">—</div>
+        <div class="hero-rule"></div>
+        <div class="hero-stat"><span>家計総額</span><b id="heroTotal">—</b></div>
+        <div class="hero-status" id="heroInputStatus">入力月を確認中...</div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="section-heading overview-heading">
+    <span class="section-number">01 / CLOSE</span>
+    <h2>今月を締める</h2>
+    <p>変動した項目だけ入力。途中なら下書き、確認できたら確定保存。PDFも同じ月にまとめられます。</p>
+  </div>
 
   <!-- METRICS -->
   <div class="metrics-row">
@@ -568,12 +837,18 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
     </div>
   </div>
 
+  <div class="section-heading trends-heading">
+    <span class="section-number">02 / READ</span>
+    <h2>暮らしの脈を読む</h2>
+    <p>確定した月だけで比較。上がった理由と、次に見直す場所を数字の流れから見つけます。</p>
+  </div>
+
   <!-- MAIN CHART: 合計推移 -->
   <div class="card chart-main">
     <div class="card-title">合計支出 推移（4人）</div>
     <div class="legend-row">
-      <span><span class="legend-dot" style="background:#6b4fd8"></span>合計支出</span>
-      <span><span class="legend-dot" style="background:#c0335e"></span>Kei→Miz精算</span>
+      <span><span class="legend-dot" style="background:#151812"></span>合計支出</span>
+      <span><span class="legend-dot" style="background:#f05b43"></span>Kei→Miz精算</span>
     </div>
     <div class="chart-wrap h240">
       <canvas id="chartMain" role="img" aria-label="合計支出とKei精算額の月次推移"></canvas>
@@ -788,6 +1063,11 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
     </table>
     </div>
   </div>
+
+  <section class="closing-strip">
+    <div><span>NEXT MONTH, LESS FRICTION.</span><h2>来月の自分に、数字を残す。</h2></div>
+    <button type="button" class="hero-cta js-jump-edit">入力へ戻る ↑</button>
+  </section>
 
 </div>
 
@@ -1243,8 +1523,8 @@ function initCharts() {
   };
 
   mkLine('chartMain', [
-    { label: '合計支出', data: data.map(totalExpense), borderColor: '#6b4fd8', backgroundColor: 'rgba(107,79,216,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#6b4fd8', borderWidth: 1.5 },
-    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#c0335e', backgroundColor: 'rgba(192,51,94,0.04)', fill: false, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c0335e', borderWidth: 1.5, borderDash: [4,3] },
+    { label: '合計支出', data: data.map(totalExpense), borderColor: '#151812', backgroundColor: 'rgba(21,24,18,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#151812', borderWidth: 2 },
+    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#f05b43', backgroundColor: 'rgba(240,91,67,0.04)', fill: false, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#f05b43', borderWidth: 2, borderDash: [4,3] },
   ]);
 
   if (charts['chartUtil']) charts['chartUtil'].destroy();
@@ -1268,11 +1548,11 @@ function initCharts() {
   });
 
   mkLine('chartFood', [
-    { label: '食費', data: data.map(d => d.food), borderColor: '#c47a10', backgroundColor: 'rgba(196,122,16,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c47a10', borderWidth: 1.5 },
+    { label: '雑費', data: data.map(d => d.food), borderColor: '#d27a21', backgroundColor: 'rgba(210,122,33,0.08)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#d27a21', borderWidth: 2 },
   ]);
 
   mkLine('chartSettle', [
-    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#c0335e', backgroundColor: 'rgba(192,51,94,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c0335e', borderWidth: 1.5 },
+    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#f05b43', backgroundColor: 'rgba(240,91,67,0.08)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#f05b43', borderWidth: 2 },
   ]);
 }
 
@@ -1329,6 +1609,9 @@ function updateMetrics() {
   const prevSettle = prev ? calcSettle(prev).settle : null;
   document.getElementById('m-settle').innerHTML = `${fmtSettle(settle)}<span></span>`;
   document.getElementById('m-settle-month').textContent = `最新確定月 ${fmtLabel(latest)}`;
+  document.getElementById('heroLatestMonth').textContent = `${String(latest.m).padStart(2,'0')} / ${latest.y}`;
+  document.getElementById('heroSettle').textContent = fmtSettle(settle);
+  document.getElementById('heroTotal').textContent = `¥${fmt(latestTotal)}`;
   if (prevSettle !== null) {
     const sd = settle - prevSettle;
     const sPct = prevSettle === 0 ? null : Math.round(sd / Math.abs(prevSettle) * 100);
@@ -1440,8 +1723,17 @@ function updateInputMonthLabel() {
   const year = document.getElementById('editYear').value;
   const month = document.getElementById('editMonth').value;
   const button = document.getElementById('jumpToEdit');
-  if (button) button.textContent = `${month}月分を入力`;
+  if (button) button.textContent = `${month}月を締める ↘`;
   document.querySelector('.edit-header h2').textContent = `月次入力 ${year}/${String(month).padStart(2,'0')}`;
+}
+
+function updateHeroInputStatus(found, year, month) {
+  const el = document.getElementById('heroInputStatus');
+  if (!el) return;
+  const label = `${String(month).padStart(2,'0')} / ${year}`;
+  if (!found) el.textContent = `${label} — NEW MONTH / 未保存`;
+  else if (found.status === 'draft') el.textContent = `${label} — DRAFT / 入力受付中`;
+  else el.textContent = `${label} — CLOSED / 確定済み`;
 }
 
 function persistDraft(key = currentEditKey || selectedMonthKey(), data = readFormData('draft'), updateUi = true) {
@@ -1451,6 +1743,8 @@ function persistDraft(key = currentEditKey || selectedMonthKey(), data = readFor
     if (updateUi && key === currentEditKey) {
       setSaveState(`下書き保存 ${savedTimeLabel(data.updated_at)}`);
       document.getElementById('loadEditBadge').style.display = 'none';
+      const [year, month] = key.split('-').map(Number);
+      updateHeroInputStatus(data, year, month);
     }
     refreshDashboard();
   } catch (error) {
@@ -1525,6 +1819,7 @@ function loadEdit() {
   updatePreview();
   updateCompletion();
   updateInputMonthLabel();
+  updateHeroInputStatus(found, y, m);
   const savedAt = savedTimeLabel(base.updated_at);
   setSaveState(found?.status === 'draft' ? `下書き保存${savedAt ? ` ${savedAt}` : ''}` : found ? `確定済み${savedAt ? ` ${savedAt}` : ''}` : '未保存', found && found.status !== 'draft');
   setPdfStatus();
@@ -1657,6 +1952,7 @@ function saveMonth() {
   refreshDashboard();
   document.getElementById('loadEditBadge').style.display = 'none';
   setSaveState('確定済み', true);
+  updateHeroInputStatus(overrides[key], y, m);
   const btn = document.getElementById('saveBtn');
   btn.textContent = '確定済み ✓'; btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '確定保存'; btn.classList.remove('saved'); }, 2000);
@@ -2172,11 +2468,11 @@ function setupAdders() {
 }
 
 function setupMonthlyWorkflow() {
-  const metrics = document.querySelector('.metrics-row');
+  const overview = document.querySelector('.overview-heading');
   const editPanel = document.querySelector('.edit-panel');
-  if (metrics && editPanel) metrics.after(editPanel);
-  document.getElementById('jumpToEdit')?.addEventListener('click', () => {
-    editPanel?.scrollIntoView({ behavior:'smooth', block:'start' });
+  if (overview && editPanel) overview.after(editPanel);
+  document.querySelectorAll('#jumpToEdit, .js-jump-edit').forEach(button => {
+    button.addEventListener('click', () => editPanel?.scrollIntoView({ behavior:'smooth', block:'start' }));
   });
 }
 
