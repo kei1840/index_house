@@ -680,11 +680,21 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
 
 .card, .insights-card { border-radius: 0; border: 1px solid var(--border); background: rgba(250,248,240,.86); }
 .card-title { color: #151812; font-size: .61rem; }
-.chart-main { border-top: 5px solid #151812; }
-.chart-util { border-top: 5px solid var(--accent-elec); }
-.chart-food { border-top: 5px solid var(--accent-food); }
-.chart-settle { border-top: 5px solid var(--accent-kei); }
-.chart-donut { border-top: 5px solid var(--accent-water); }
+.chart-main, .chart-util, .chart-food, .chart-settle, .chart-donut {
+  padding: 1.5rem; color: #fff; background: #151812; border-color: #151812;
+}
+.chart-main { grid-column: 1 / -1; border-top: 5px solid var(--accent-settle); }
+.chart-util { grid-column: 1 / 3; border-top: 5px solid var(--accent-elec); }
+.chart-food { grid-column: 3 / 5; border-top: 5px solid var(--accent-food); }
+.chart-settle { grid-column: 1 / 3; border-top: 5px solid var(--accent-kei); }
+.chart-donut { grid-column: 3 / 5; border-top: 5px solid var(--accent-water); }
+.chart-main .chart-wrap.h240 { height: 330px; }
+.chart-food .chart-wrap.h200, .chart-settle .chart-wrap.h200 { height: 250px; }
+.chart-main .card-title, .chart-util .card-title, .chart-food .card-title,
+.chart-settle .card-title, .chart-donut .card-title { color: rgba(255,255,255,.82); }
+.chart-main .legend-row, .chart-util .legend-row { color: rgba(255,255,255,.5); }
+#donutLegend { color: rgba(255,255,255,.55) !important; }
+#donutLegend [style*="color:var(--text)"] { color: #fff !important; }
 .insights-card { border: 2px solid #151812; }
 .insight-item { border-radius: 0; background: #e8e5da; border-left-width: 6px; }
 .table-card { margin-top: 1.6rem; border-top: 5px solid #151812; }
@@ -711,6 +721,8 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
   .metrics-row { grid-template-columns: repeat(3, 1fr); }
   .metric-card { border-bottom: 1px solid var(--border); }
   .metric-card.settle { grid-column: span 2; }
+  .chart-main { grid-column: 1 / -1; }
+  .chart-util, .chart-food, .chart-settle, .chart-donut { grid-column: span 2; }
 }
 @media (max-width: 760px) {
   header.site-header { min-height: 60px; padding: 0 1rem; }
@@ -739,6 +751,9 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
   #saveBtn { flex: 1; }
   .settle-preview { margin: 1.2rem -1rem -1rem; padding: 1.15rem 1rem; }
   .chart-wrap.h240 { height: 220px; }
+  .chart-main, .chart-util, .chart-food, .chart-settle, .chart-donut { grid-column: 1 / -1; padding: 1.1rem; }
+  .chart-main .chart-wrap.h240 { height: 260px; }
+  .chart-food .chart-wrap.h200, .chart-settle .chart-wrap.h200 { height: 220px; }
   .closing-strip { align-items: flex-start; flex-direction: column; }
 }
 </style>
@@ -763,7 +778,7 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
     <button type="button" class="header-action" id="jumpToEdit">7月を締める ↘</button>
   </div>
 </header>
-<div class="storage-notice"><strong>LOCAL FIRST</strong><span>入力内容とPDFはこの端末に保存。月末にバックアップを書き出すと安心です。</span></div>
+<div class="storage-notice"><strong>LOCAL FIRST</strong><span>同じブラウザでは自動保存。グラフは「確定して反映」後に更新され、別端末には同期されません。</span></div>
 
 <div class="dashboard">
 
@@ -847,7 +862,7 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
   <div class="card chart-main">
     <div class="card-title">合計支出 推移（4人）</div>
     <div class="legend-row">
-      <span><span class="legend-dot" style="background:#151812"></span>合計支出</span>
+      <span><span class="legend-dot" style="background:#c7ff36"></span>合計支出</span>
       <span><span class="legend-dot" style="background:#f05b43"></span>Kei→Miz精算</span>
     </div>
     <div class="chart-wrap h240">
@@ -859,9 +874,9 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
   <div class="card chart-util">
     <div class="card-title">水道・電気ガス・雑費 推移</div>
     <div class="legend-row">
-      <span><span class="legend-dot" style="background:#1a6fc4"></span>電気ガス</span>
-      <span><span class="legend-dot" style="background:#0d8f6a"></span>水道</span>
-      <span><span class="legend-dot" style="background:#c47a10"></span>雑費</span>
+      <span><span class="legend-dot" style="background:#4d79ee"></span>電気ガス</span>
+      <span><span class="legend-dot" style="background:#4abf8d"></span>水道</span>
+      <span><span class="legend-dot" style="background:#f0a14a"></span>雑費</span>
     </div>
     <div class="chart-wrap h240">
       <canvas id="chartUtil" role="img" aria-label="水道・電気ガス・雑費の月次推移"></canvas>
@@ -911,7 +926,7 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
         <span id="loadEditBadge" style="display:none;font-family:var(--mono);font-size:0.65rem;color:var(--accent-water);background:rgba(13,143,106,0.1);border:1px solid rgba(13,143,106,0.25);border-radius:4px;padding:2px 8px;">先月から引用</span>
         <span class="completion-state" id="completionState">入力 0/4</span>
         <span class="save-state" id="saveState">確認中…</span>
-        <button class="save-btn" id="saveBtn" onclick="saveMonth()">確定保存</button>
+        <button class="save-btn" id="saveBtn" onclick="saveMonth()">確定してグラフへ反映</button>
         <button class="save-btn btn-secondary" type="button" id="backupBtn" onclick="exportBackup()">バックアップ</button>
         <button class="save-btn btn-secondary" type="button" id="restoreBtn" onclick="document.getElementById('backupInput').click()">復元</button>
         <input type="file" id="backupInput" accept="application/json,.json" hidden>
@@ -1490,14 +1505,15 @@ function chartDefaults() {
   return {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: {
-      backgroundColor: '#ffffff', borderColor: 'rgba(0,0,0,0.12)', borderWidth: 1,
-      titleColor: '#8a8a96', bodyColor: '#1a1a1e', titleFont: { family: 'DM Mono', size: 11 },
-      bodyFont: { family: 'DM Mono', size: 11 },
+      backgroundColor: '#c7ff36', borderColor: '#151812', borderWidth: 1,
+      titleColor: '#51564d', bodyColor: '#151812', padding: 12,
+      titleFont: { family: 'IBM Plex Mono', size: 10 },
+      bodyFont: { family: 'IBM Plex Mono', size: 11, weight: '500' },
       callbacks: { label: ctx => ` ¥${fmt(ctx.raw)}` }
     }},
     scales: {
-      x: { ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a96', maxRotation: 45, autoSkip: true }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.1)' } },
-      y: { ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a96', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.1)' } }
+      x: { ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: 'rgba(255,255,255,.48)', maxRotation: 0, autoSkip: true }, grid: { display: false }, border: { color: 'rgba(255,255,255,.16)' } },
+      y: { ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: 'rgba(255,255,255,.48)', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(255,255,255,.08)' }, border: { display: false } }
     }
   };
 }
@@ -1523,8 +1539,8 @@ function initCharts() {
   };
 
   mkLine('chartMain', [
-    { label: '合計支出', data: data.map(totalExpense), borderColor: '#151812', backgroundColor: 'rgba(21,24,18,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#151812', borderWidth: 2 },
-    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#f05b43', backgroundColor: 'rgba(240,91,67,0.04)', fill: false, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#f05b43', borderWidth: 2, borderDash: [4,3] },
+    { label: '合計支出', data: data.map(totalExpense), borderColor: '#c7ff36', backgroundColor: 'rgba(199,255,54,0.10)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#c7ff36', borderWidth: 2.5 },
+    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#f05b43', backgroundColor: 'transparent', fill: false, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#f05b43', borderWidth: 2, borderDash: [5,5] },
   ]);
 
   if (charts['chartUtil']) charts['chartUtil'].destroy();
@@ -1533,26 +1549,26 @@ function initCharts() {
     data: {
       labels,
       datasets: [
-        { label: '電気ガス', data: data.map(d => d.elec+(d.gas||0)), backgroundColor: 'rgba(26,111,196,0.75)', borderColor: '#1a6fc4', borderWidth: 0 },
-        { label: '水道', data: data.map(d => d.water), backgroundColor: 'rgba(13,143,106,0.75)', borderColor: '#0d8f6a', borderWidth: 0 },
-        { label: '雑費', data: data.map(d => d.food), backgroundColor: 'rgba(196,122,16,0.75)', borderColor: '#c47a10', borderWidth: 0 },
+        { label: '電気ガス', data: data.map(d => d.elec+(d.gas||0)), backgroundColor: '#4d79ee', borderWidth: 0, borderRadius: 3, borderSkipped: false },
+        { label: '水道', data: data.map(d => d.water), backgroundColor: '#4abf8d', borderWidth: 0, borderRadius: 3, borderSkipped: false },
+        { label: '雑費', data: data.map(d => d.food), backgroundColor: '#f0a14a', borderWidth: 0, borderRadius: 3, borderSkipped: false },
       ]
     },
     options: {
       ...chartDefaults(),
       scales: {
-        x: { stacked: true, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a96', maxRotation: 45, autoSkip: true }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.1)' } },
-        y: { stacked: true, ticks: { font: { family: 'DM Mono', size: 10 }, color: '#8a8a96', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(0,0,0,0.05)' }, border: { color: 'rgba(0,0,0,0.1)' } }
+        x: { stacked: true, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: 'rgba(255,255,255,.48)', maxRotation: 0, autoSkip: true }, grid: { display: false }, border: { color: 'rgba(255,255,255,.16)' } },
+        y: { stacked: true, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: 'rgba(255,255,255,.48)', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(255,255,255,.08)' }, border: { display: false } }
       }
     }
   });
 
   mkLine('chartFood', [
-    { label: '雑費', data: data.map(d => d.food), borderColor: '#d27a21', backgroundColor: 'rgba(210,122,33,0.08)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#d27a21', borderWidth: 2 },
+    { label: '雑費', data: data.map(d => d.food), borderColor: '#f0a14a', backgroundColor: 'rgba(240,161,74,0.12)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#f0a14a', borderWidth: 2.5 },
   ]);
 
   mkLine('chartSettle', [
-    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#f05b43', backgroundColor: 'rgba(240,91,67,0.08)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#f05b43', borderWidth: 2 },
+    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#f05b43', backgroundColor: 'rgba(240,91,67,0.12)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#f05b43', borderWidth: 2.5 },
   ]);
 }
 
@@ -1955,7 +1971,7 @@ function saveMonth() {
   updateHeroInputStatus(overrides[key], y, m);
   const btn = document.getElementById('saveBtn');
   btn.textContent = '確定済み ✓'; btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = '確定保存'; btn.classList.remove('saved'); }, 2000);
+  setTimeout(() => { btn.textContent = '確定してグラフへ反映'; btn.classList.remove('saved'); }, 2000);
 }
 
 function initDonut() {
@@ -1964,8 +1980,8 @@ function initDonut() {
   const d = all[all.length - 1];
 
   const fixed = [
-    { label: '家賃', val: d.rent, color: '#6b4fd8' },
-    { label: 'ネット', val: d.net, color: '#9b7fef' },
+    { label: '家賃', val: d.rent, color: '#c7ff36' },
+    { label: 'ネット', val: d.net, color: '#f3f0e6' },
     { label: 'Netflix', val: d.netflix, color: '#e50914' },
     { label: 'NHK', val: d.nhk, color: '#4a90d9' },
     { label: 'YouTube', val: d.youtube, color: '#ff0000' },
@@ -1980,12 +1996,12 @@ function initDonut() {
   const rinjiTotal = dRinjiItems.reduce((s,it) => s+(it.val||0), 0);
 
   const variable = [
-    { label: '電気代', val: d.elec, color: '#1a6fc4' },
-    { label: 'ガス代', val: d.gas||0, color: '#3a8fd4' },
-    { label: '水道', val: d.water, color: '#0d8f6a' },
-    { label: '雑費', val: d.food, color: '#c47a10' },
-    { label: '父母食費', val: d.food_par, color: '#d89a42' },
-    { label: '臨時支出', val: rinjiTotal, color: '#c0335e' },
+    { label: '電気代', val: d.elec, color: '#4d79ee' },
+    { label: 'ガス代', val: d.gas||0, color: '#78a0ff' },
+    { label: '水道', val: d.water, color: '#4abf8d' },
+    { label: '雑費', val: d.food, color: '#f0a14a' },
+    { label: '父母食費', val: d.food_par, color: '#ffd37a' },
+    { label: '臨時支出', val: rinjiTotal, color: '#f05b43' },
   ].filter(i => i.val > 0);
 
   const totalFixed = fixed.reduce((s,i) => s+i.val, 0);
@@ -1994,14 +2010,14 @@ function initDonut() {
   const allItems = [...fixed, ...variable].sort((a,b) => b.val - a.val);
   const top5 = allItems.slice(0, 5);
   const otherVal = allItems.slice(5).reduce((s,i) => s+i.val, 0);
-  const items = otherVal > 0 ? [...top5, { label: 'その他', val: otherVal, color: '#ccc' }] : top5;
+  const items = otherVal > 0 ? [...top5, { label: 'その他', val: otherVal, color: '#7b8075' }] : top5;
 
   if (charts['chartDonut']) charts['chartDonut'].destroy();
   charts['chartDonut'] = new Chart(document.getElementById('chartDonut'), {
     type: 'doughnut',
     data: {
       labels: items.map(i => i.label),
-      datasets: [{ data: items.map(i => i.val), backgroundColor: items.map(i => i.color), borderWidth: 2, borderColor: '#fff' }]
+      datasets: [{ data: items.map(i => i.val), backgroundColor: items.map(i => i.color), borderWidth: 3, borderColor: '#151812', hoverOffset: 6 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -2009,9 +2025,9 @@ function initDonut() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#fff', borderColor: 'rgba(0,0,0,0.12)', borderWidth: 1,
-          titleColor: '#8a8a96', bodyColor: '#1a1a1e',
-          titleFont: { family: 'DM Mono', size: 10 }, bodyFont: { family: 'DM Mono', size: 11 },
+          backgroundColor: '#c7ff36', borderColor: '#151812', borderWidth: 1,
+          titleColor: '#51564d', bodyColor: '#151812',
+          titleFont: { family: 'IBM Plex Mono', size: 10 }, bodyFont: { family: 'IBM Plex Mono', size: 11, weight: '500' },
           callbacks: { label: ctx => ` ¥${fmt(ctx.raw)} (${totalFixed + totalVar ? Math.round(ctx.raw/(totalFixed+totalVar)*100) : 0}%)` }
         }
       }
