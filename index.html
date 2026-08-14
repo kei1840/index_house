@@ -1126,12 +1126,21 @@ const SEED = [
   {y:2026,m:2,elec:61400,water:0,food:12660,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:3,elec:49656,water:15100,food:30021,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:6,elec:31190,gas:7595,water:13860,food:40360,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,par_comm:10000,par_pay:250000,memo:'特記事項',rinji_items:'[{"label":"家更新","val":209000,"payer":"kei"},{"label":"火災保険","val":24000,"payer":"kei"}]'},
-  {y:2026,m:7,elec:0,gas:0,water:0,food:0,food_detail:'',food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,abema:1180,newspaper:5000,rakuten_mobile:5000,par_comm:0,par_pay:130000,memo:'',status:'draft'},
+  {y:2026,m:7,elec:24467,gas:6012,water:0,food:8366,food_detail:'',food_items:'[{"val":7566,"label":"ジップロック コンテナ / ジップロック スクリューロック / シン太 歯磨きガム / 洗濯槽カビ洗浄剤 / OZA SODA 炭酸水 / アースノーマット / ルイボスティー / フライパン蓋"},{"val":800,"label":"食材"}]',food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,abema:1180,newspaper:5000,rakuten_mobile:5000,par_comm:0,par_pay:130000,memo:'特記事項',status:'complete',revision:1},
 ];
 
 const STORAGE_KEY = 'household_v2';
 let overrides = {};
 try { overrides = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){}
+// GitHubへ確定済みとして取り込んだ月は、それ以前の端末内下書きより優先する。
+let replacedByCanonical = false;
+SEED.filter(row => Number(row.revision) > 0).forEach(row => {
+  const key = `${row.y}-${row.m}`;
+  if (overrides[key] && Number(overrides[key].seed_revision || 0) < row.revision) {
+    delete overrides[key];
+    replacedByCanonical = true;
+  }
+});
 // 旧「電話・新聞 10,000円」を2026/07以降は新聞と楽天モバイルへ分割。
 let migratedSplitCosts = false;
 Object.entries(overrides).forEach(([key, values]) => {
@@ -1144,7 +1153,7 @@ Object.entries(overrides).forEach(([key, values]) => {
   if (values.newspaper === undefined) { values.newspaper = 5000; migratedSplitCosts = true; }
   if (values.rakuten_mobile === undefined) { values.rakuten_mobile = 5000; migratedSplitCosts = true; }
 });
-if (migratedSplitCosts) {
+if (replacedByCanonical || migratedSplitCosts) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e) {}
 }
 
@@ -1856,6 +1865,9 @@ function readFormData(status = 'draft') {
   data.food_items = foodItems.length ? JSON.stringify(foodItems) : '';
   data.rinji_items = rinjiItems.length ? JSON.stringify(rinjiItems) : '';
   data.status = status;
+  const selectedYear = +document.getElementById('editYear').value;
+  const selectedMonth = +document.getElementById('editMonth').value;
+  data.seed_revision = Number(SEED.find(row => row.y === selectedYear && row.m === selectedMonth)?.revision || 0);
   data.updated_at = new Date().toISOString();
   return data;
 }
