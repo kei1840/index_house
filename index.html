@@ -249,7 +249,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
   color: var(--muted);
   margin-bottom: 2px;
 }
-.field input {
+.field input, .field textarea {
   width: 100%;
   font-family: var(--mono);
   font-size: 0.8rem;
@@ -260,7 +260,8 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
   color: var(--text);
   text-align: right;
 }
-.field input:focus { outline: none; border-color: rgba(167,139,250,0.5); }
+.field textarea { min-height: 54px; resize: vertical; text-align: left; line-height: 1.5; }
+.field input:focus, .field textarea:focus { outline: none; border-color: rgba(167,139,250,0.5); }
 .adder-row {
   display: flex; gap: 4px; margin-top: 3px;
 }
@@ -617,6 +618,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       <div>
         <div class="edit-col-title">雑費・家賃</div>
         <div class="field"><label>雑費 (Kei払)</label><input type="number" id="e_food" placeholder="0"></div>
+        <div class="field"><label>雑費の詳細</label><textarea id="e_food_detail" maxlength="500" placeholder="例：スーパー、日用品、ドラッグストア"></textarea></div>
         <div class="field"><label>食費（父母）</label><input type="number" id="e_food_par" placeholder="0"></div>
         <div class="field"><label>家賃 (Miz払)</label><input type="number" id="e_rent" placeholder="150000"></div>
       </div>
@@ -700,7 +702,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-top:2px" id="prev-settle-note">—</div>
       </div>
       <div id="food-preview-wrap" style="display:none;flex-basis:100%;margin-top:0.5rem;padding-top:0.75rem;border-top:1px solid var(--border);">
-        <div style="font-family:var(--mono);font-size:0.63rem;color:var(--accent-food);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">雑費 内訳（¥10,000以上）</div>
+        <div style="font-family:var(--mono);font-size:0.63rem;color:var(--accent-food);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px">雑費 詳細</div>
         <div id="food-preview-list" class="food-breakdown"></div>
       </div>
       <div id="expense-rank-wrap" style="flex-basis:100%;margin-top:0.5rem;padding-top:0.75rem;border-top:1px solid var(--border);">
@@ -777,7 +779,7 @@ const SEED = [
   {y:2026,m:2,elec:61400,water:0,food:12660,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:3,elec:49656,water:15100,food:30021,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:6,elec:31190,gas:7595,water:13860,food:40360,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,par_comm:10000,par_pay:250000,memo:'特記事項',rinji_items:'[{"label":"家更新","val":209000,"payer":"kei"},{"label":"火災保険","val":24000,"payer":"kei"}]'},
-  {y:2026,m:7,elec:0,gas:0,water:0,food:0,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,abema:1180,newspaper:5000,rakuten_mobile:5000,par_comm:0,par_pay:130000,memo:''},
+  {y:2026,m:7,elec:0,gas:0,water:0,food:0,food_detail:'',food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,abema:1180,newspaper:5000,rakuten_mobile:5000,par_comm:0,par_pay:130000,memo:''},
 ];
 
 const STORAGE_KEY = 'household_v2';
@@ -1134,11 +1136,11 @@ function getAll() {
     }
     const { __extra, ...values } = row;
     const defaults = previous
-      ? { ...previous, memo:'', food_items:'', rinji_items:'' }
+      ? { ...previous, memo:'', food_detail:'', food_items:'', rinji_items:'' }
       : { elec:0, gas:0, water:0, food:0, food_par:70000, rent:150000,
           net:6000, netflix:0, nhk:0, youtube:0, apple:0, abema:0,
           newspaper:0, rakuten_mobile:0,
-          par_comm:10000, par_pay:130000, memo:'', food_items:'', rinji_items:'' };
+          par_comm:10000, par_pay:130000, memo:'', food_detail:'', food_items:'', rinji_items:'' };
     previous = { ...defaults, ...values, y: row.y, m: row.m };
     return previous;
   });
@@ -1293,11 +1295,11 @@ function updateTable() {
     const { settle } = calcSettle(d);
     let foodItemsArr = [];
     try { if (d.food_items) foodItemsArr = JSON.parse(d.food_items); } catch(e) {}
-    const foodTip = foodItemsArr.length > 0
-      ? foodItemsArr.map(fi => `${fi.label||'未入力'}: ¥${fmt(fi.val)}`).join(' / ')
-      : '';
-    const foodCell = foodItemsArr.length > 0
-      ? `¥${fmt(d.food)} <span title="${escapeHTML(foodTip)}" style="cursor:help;color:var(--accent-food);font-size:0.62rem;border-bottom:1px dotted var(--accent-food)">内訳▸</span>`
+    const foodTipParts = foodItemsArr.map(fi => `${fi.label||'未入力'}: ¥${fmt(fi.val)}`);
+    if (d.food_detail) foodTipParts.push(d.food_detail);
+    const foodTip = foodTipParts.join(' / ');
+    const foodCell = foodTip
+      ? `¥${fmt(d.food)} <span title="${escapeHTML(foodTip)}" style="cursor:help;color:var(--accent-food);font-size:0.62rem;border-bottom:1px dotted var(--accent-food)">詳細▸</span>`
       : `¥${fmt(d.food)}`;
     const total = totalExpense(d);
     html += `<tr>
@@ -1346,7 +1348,7 @@ function loadEdit() {
   const found = all.find(d => d.y === y && d.m === m);
   // 該当月がなければ直前月のデータをデフォルトとして使う（メモはクリア）
   const prevMonth = all.slice().reverse().find(d => d.y < y || (d.y === y && d.m < m));
-  const base = found || (prevMonth ? { ...prevMonth, memo: '' } : {});
+  const base = found || (prevMonth ? { ...prevMonth, memo: '', food_detail: '' } : {});
   const isNew = !found;
   const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','abema','net','newspaper','rakuten_mobile','par_comm','par_pay'];
   fields.forEach(f => {
@@ -1355,6 +1357,8 @@ function loadEdit() {
   });
   const memoEl = document.getElementById('e_memo');
   if (memoEl) memoEl.value = base.memo || '';
+  const foodDetailEl = document.getElementById('e_food_detail');
+  if (foodDetailEl) foodDetailEl.value = base.food_detail || '';
   // 新規月は「先月から引用」バッジを表示
   const badge = document.getElementById('loadEditBadge');
   if (badge) { badge.style.display = isNew && prevMonth ? '' : 'none'; }
@@ -1367,7 +1371,7 @@ function loadEdit() {
   const foodInputEl = document.getElementById('e_food');
   if (foodInputEl) renderFoodItems(foodInputEl);
   const fpw = document.getElementById('food-preview-wrap');
-  if (!foodItems.length && fpw) fpw.style.display = 'none';
+  if (!foodItems.length && !base.food_detail && fpw) fpw.style.display = 'none';
   renderRinjiItems();
   updatePreview();
   setPdfStatus();
@@ -1383,6 +1387,7 @@ function readFormData() {
   const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','abema','net','newspaper','rakuten_mobile','par_comm','par_pay'];
   const data = { memo: document.getElementById('e_memo')?.value || '' };
   fields.forEach(field => { data[field] = formNumber(`e_${field}`); });
+  data.food_detail = document.getElementById('e_food_detail')?.value.trim() || '';
   data.food_items = foodItems.length ? JSON.stringify(foodItems) : '';
   data.rinji_items = rinjiItems.length ? JSON.stringify(rinjiItems) : '';
   return data;
@@ -1456,6 +1461,10 @@ function updatePreview() {
 ['e_elec','e_gas','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_abema','e_net','e_newspaper','e_rakuten_mobile','e_par_comm','e_par_pay'].forEach(id => {
   const el = document.getElementById(id);
   if (el) el.addEventListener('input', updatePreview);
+});
+document.getElementById('e_food_detail')?.addEventListener('input', () => {
+  const foodInput = document.getElementById('e_food');
+  if (foodInput) renderFoodItems(foodInput);
 });
 
 function refreshDashboard() {
@@ -1734,6 +1743,7 @@ function fillTestData() {
     if (el) backup[f] = el.value;
   });
   backup.memo = document.getElementById('e_memo')?.value || '';
+  backup.food_detail = document.getElementById('e_food_detail')?.value || '';
   sessionStorage.setItem(TEST_KEY, JSON.stringify(backup));
 
   // テストデータ入力（±20%）
@@ -1764,6 +1774,8 @@ function clearTestData() {
   });
   const memoEl = document.getElementById('e_memo');
   if (memoEl) memoEl.value = backup.memo || '';
+  const foodDetailEl = document.getElementById('e_food_detail');
+  if (foodDetailEl) foodDetailEl.value = backup.food_detail || '';
   updatePreview();
   sessionStorage.removeItem(TEST_KEY);
   document.getElementById('clearTestBtn').style.display = 'none';
@@ -1847,14 +1859,22 @@ function renderNamedItems(mainInput, items, removeFnName) {
 function renderFoodItems(mainInput) {
   renderNamedItems(mainInput, foodItems, 'removeFoodItem');
   const total = parseFloat(mainInput.value) || 0;
+  const detail = document.getElementById('e_food_detail')?.value.trim() || '';
   const wrap = document.getElementById('food-preview-wrap');
   const previewList = document.getElementById('food-preview-list');
   if (wrap && previewList) {
-    if (total >= 10000 && foodItems.length > 0) {
-      wrap.style.display = '';
-      previewList.innerHTML = foodItems.map(it =>
+    const parts = [];
+    if (foodItems.length > 0) {
+      parts.push(foodItems.map(it =>
         `<span style="color:var(--accent-food)">¥${fmt(it.val)}</span> ${escapeHTML(it.label || '未入力')}`
-      ).join('&emsp;/&emsp;');
+      ).join('&emsp;/&emsp;'));
+    }
+    if (detail) {
+      parts.push(`<span style="color:var(--accent-food)">メモ:</span> ${escapeHTML(detail).replace(/\n/g, '<br>')}`);
+    }
+    if (parts.length) {
+      wrap.style.display = '';
+      previewList.innerHTML = parts.join('<br>');
     } else if (total >= 10000) {
       wrap.style.display = '';
       previewList.textContent = `¥${fmt(total)}（費目未入力）`;
