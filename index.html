@@ -6,7 +6,7 @@
 <title>家計ダッシュボード</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 #lock {
   position: fixed; inset: 0; background: #f4f4f0;
@@ -44,7 +44,7 @@
   --accent-kei: #c0335e;
   --accent-settle: #6b4fd8;
   --mono: 'DM Mono', monospace;
-  --sans: 'Noto Sans JP', sans-serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Noto Sans JP', sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); font-family: var(--sans); font-weight: 300; min-height: 100vh; }
@@ -60,8 +60,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 .dashboard {
   padding: 1.5rem 2.5rem 3rem;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: auto auto auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.2rem;
 }
 
@@ -137,10 +136,10 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 
 /* CHARTS */
 .chart-main { grid-column: 1 / 3; }
-.chart-util { grid-column: 3 / 4; }
+.chart-util { grid-column: 3 / 5; }
 .chart-food { grid-column: 1 / 2; }
 .chart-settle { grid-column: 2 / 3; }
-.chart-donut { grid-column: 3 / 4; }
+.chart-donut { grid-column: 3 / 5; }
 
 .chart-wrap { position: relative; width: 100%; }
 .chart-wrap.h240 { height: 240px; }
@@ -156,7 +155,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 }
 .insights-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-top: 0.75rem;
 }
@@ -326,6 +325,55 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
   margin-top: 4px; line-height: 1.7;
 }
 
+/* PDF ATTACHMENTS */
+.pdf-section {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.9rem;
+}
+.pdf-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.65rem;
+}
+.pdf-title {
+  font-family: var(--mono); font-size: 0.63rem; color: var(--muted);
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.pdf-storage-note { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
+.pdf-drop-zone {
+  display: grid; place-items: center; min-height: 74px; padding: 0.8rem;
+  border: 1px dashed rgba(107,79,216,0.35); border-radius: 7px;
+  background: rgba(107,79,216,0.035); color: var(--muted);
+  font-family: var(--mono); font-size: 0.68rem; text-align: center;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.pdf-drop-zone:hover, .pdf-drop-zone.dragover {
+  border-color: var(--accent-settle); background: rgba(107,79,216,0.08);
+}
+.pdf-list { display: grid; gap: 5px; margin-top: 0.65rem; }
+.pdf-row {
+  display: flex; align-items: center; gap: 0.65rem; min-width: 0;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.45rem 0.6rem;
+}
+.pdf-icon { font-size: 1rem; flex: none; }
+.pdf-info { min-width: 0; flex: 1; }
+.pdf-name {
+  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 0.72rem; color: var(--text);
+}
+.pdf-meta { font-family: var(--mono); font-size: 0.58rem; color: var(--muted); }
+.pdf-action {
+  font-family: var(--mono); font-size: 0.62rem; padding: 3px 8px;
+  border-radius: 4px; cursor: pointer; background: var(--surface);
+  border: 1px solid var(--border); color: var(--accent-settle); flex: none;
+}
+.pdf-action.delete { color: var(--accent-kei); }
+.pdf-empty, .pdf-status { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); }
+.pdf-status { min-height: 1em; margin-top: 0.4rem; }
+.pdf-status.error { color: var(--accent-kei); }
+.pdf-status.success { color: var(--accent-water); }
+
 .settle-preview {
   display: flex; align-items: center; gap: 2rem;
   margin-top: 1rem;
@@ -386,7 +434,8 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 .data-table tr:hover td { background: var(--surface2); }
 
 /* COLLAPSIBLE ANIMATION */
-#tableWrap { overflow: hidden; transition: max-height 0.3s ease; }
+#tableWrap { overflow-x: auto !important; overflow-y: hidden; transition: max-height 0.3s ease; }
+.data-table { min-width: 760px; }
 
 /* EDIT PANEL IMPROVEMENTS */
 .edit-panel { border-color: rgba(107,79,216,0.3); }
@@ -417,6 +466,10 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
   .edit-grid { grid-template-columns: repeat(2, 1fr); }
   .insights-grid { grid-template-columns: 1fr; }
   .settle-preview { flex-direction: column; gap: 0.75rem; }
+  .settle-item { width: 100%; justify-content: space-between; }
+  .metric-value { font-size: 1.2rem; }
+  .pdf-row { flex-wrap: wrap; }
+  .pdf-info { flex-basis: calc(100% - 2rem); }
 }
 </style>
 </head>
@@ -596,7 +649,7 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <input type="text" id="rinji-label" placeholder="名前（例: コンサート）"
           style="font-family:var(--sans);font-size:0.78rem;padding:4px 8px;background:var(--surface2);border:1px dashed rgba(107,79,216,0.3);border-radius:5px;color:var(--text);width:170px">
-        <input type="number" id="rinji-val" placeholder="金額"
+        <input type="number" id="rinji-val" min="1" step="1" placeholder="金額"
           style="font-family:var(--mono);font-size:0.78rem;padding:4px 8px;background:var(--surface2);border:1px dashed rgba(107,79,216,0.3);border-radius:5px;color:var(--text);width:100px;text-align:right">
         <select id="rinji-payer"
           style="font-family:var(--mono);font-size:0.75rem;padding:4px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);cursor:pointer">
@@ -607,6 +660,23 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
       </div>
       <div id="hidden-fields-restore" style="display:none;margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:4px;align-items:center"></div>
     </div>
+
+    <!-- 月別PDF添付（端末内のIndexedDBへ保存） -->
+    <section class="pdf-section" aria-labelledby="pdf-section-title">
+      <div class="pdf-header">
+        <div>
+          <span class="pdf-title" id="pdf-section-title">月別PDF添付</span>
+          <span class="pdf-storage-note">複数選択可・この端末内に保存</span>
+        </div>
+        <button type="button" class="pdf-action" id="pdf-select-btn">PDFを選択</button>
+      </div>
+      <input type="file" id="pdf-input" accept="application/pdf,.pdf" multiple hidden>
+      <div class="pdf-drop-zone" id="pdf-drop-zone" role="button" tabindex="0">
+        PDFをここへドロップ<br>またはクリックして複数ファイルを選択
+      </div>
+      <div class="pdf-list" id="pdf-list" aria-live="polite"></div>
+      <div class="pdf-status" id="pdf-status" aria-live="polite"></div>
+    </section>
 
     <div class="settle-preview">
       <div class="settle-item">
@@ -709,8 +779,6 @@ const SEED = [
 const STORAGE_KEY = 'household_v2';
 let overrides = {};
 try { overrides = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){}
-// テスト時に誤って保存されたダミーデータを削除
-if (overrides['2026-7']) { delete overrides['2026-7']; try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e){} }
 
 // 臨時支出（月ごとのitemリスト）
 let rinjiItems = []; // {label, val, payer:'kei'|'miz'}
@@ -782,37 +850,276 @@ function setupFieldDeleteButtons() {
   });
 }
 
+function num(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function parseItems(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  })[char]);
+}
+
+function rinjiTotal(d) {
+  return parseItems(d.rinji_items).reduce((sum, item) => sum + Math.max(0, num(item.val)), 0);
+}
+
+// 世帯から外へ出る支出の総額。父母から受け取るpar_payは収入なので含めない。
+function totalExpense(d) {
+  return ['rent','net','elec','gas','water','food','food_par','netflix','nhk','youtube','apple','par_comm']
+    .reduce((sum, key) => sum + Math.max(0, num(d[key])), 0) + rinjiTotal(d);
+}
+
+const PDF_DB_NAME = 'household_pdf_attachments';
+const PDF_STORE = 'files';
+const PDF_MAX_BYTES = 40 * 1024 * 1024;
+let pdfDbPromise = null;
+
+function currentMonthKey() {
+  return `${document.getElementById('editYear').value}-${document.getElementById('editMonth').value}`;
+}
+
+function setPdfStatus(message = '', type = '') {
+  const status = document.getElementById('pdf-status');
+  if (!status) return;
+  status.textContent = message;
+  status.className = `pdf-status${type ? ` ${type}` : ''}`;
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function openPdfDb() {
+  if (!('indexedDB' in window)) return Promise.reject(new Error('このブラウザはPDF保存に対応していません'));
+  if (pdfDbPromise) return pdfDbPromise;
+  pdfDbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open(PDF_DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(PDF_STORE)) {
+        const store = db.createObjectStore(PDF_STORE, { keyPath: 'id' });
+        store.createIndex('monthKey', 'monthKey', { unique: false });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('PDF保存領域を開けませんでした'));
+  });
+  return pdfDbPromise;
+}
+
+function waitForTransaction(transaction) {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error || new Error('PDFの保存に失敗しました'));
+    transaction.onabort = () => reject(transaction.error || new Error('PDFの保存が中断されました'));
+  });
+}
+
+async function getPdfAttachments(monthKey) {
+  const db = await openPdfDb();
+  return new Promise((resolve, reject) => {
+    const request = db.transaction(PDF_STORE, 'readonly').objectStore(PDF_STORE).index('monthKey').getAll(monthKey);
+    request.onsuccess = () => resolve(request.result.sort((a, b) => b.addedAt - a.addedAt));
+    request.onerror = () => reject(request.error || new Error('PDF一覧を取得できませんでした'));
+  });
+}
+
+async function getPdfAttachment(id) {
+  const db = await openPdfDb();
+  return new Promise((resolve, reject) => {
+    const request = db.transaction(PDF_STORE, 'readonly').objectStore(PDF_STORE).get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('PDFを開けませんでした'));
+  });
+}
+
+async function renderPdfAttachments() {
+  const list = document.getElementById('pdf-list');
+  if (!list) return;
+  const requestedMonth = currentMonthKey();
+  list.innerHTML = '<div class="pdf-empty">読み込み中…</div>';
+  try {
+    const files = await getPdfAttachments(requestedMonth);
+    if (requestedMonth !== currentMonthKey()) return;
+    if (!files.length) {
+      list.innerHTML = '<div class="pdf-empty">この月のPDFはまだありません</div>';
+      return;
+    }
+    list.innerHTML = files.map(file => `
+      <div class="pdf-row">
+        <span class="pdf-icon" aria-hidden="true">📄</span>
+        <div class="pdf-info">
+          <span class="pdf-name" title="${escapeHTML(file.name)}">${escapeHTML(file.name)}</span>
+          <span class="pdf-meta">${formatFileSize(file.size)} ・ ${new Date(file.addedAt).toLocaleDateString('ja-JP')}</span>
+        </div>
+        <button type="button" class="pdf-action pdf-open" data-pdf-id="${file.id}">開く</button>
+        <button type="button" class="pdf-action delete pdf-delete" data-pdf-id="${file.id}" data-pdf-name="${escapeHTML(file.name)}">削除</button>
+      </div>`).join('');
+    list.querySelectorAll('.pdf-open').forEach(button => {
+      button.addEventListener('click', () => openPdfAttachment(button.dataset.pdfId));
+    });
+    list.querySelectorAll('.pdf-delete').forEach(button => {
+      button.addEventListener('click', () => deletePdfAttachment(button.dataset.pdfId, button.dataset.pdfName));
+    });
+  } catch (error) {
+    list.innerHTML = '<div class="pdf-empty">PDF一覧を表示できません</div>';
+    setPdfStatus(error.message, 'error');
+  }
+}
+
+async function addPdfFiles(fileList) {
+  const selected = Array.from(fileList || []);
+  const pdfs = selected.filter(file => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+  const tooLarge = pdfs.filter(file => file.size > PDF_MAX_BYTES);
+  const accepted = pdfs.filter(file => file.size <= PDF_MAX_BYTES);
+  if (!accepted.length) {
+    setPdfStatus(tooLarge.length ? '1ファイル40MB以下のPDFを選択してください' : 'PDFファイルを選択してください', 'error');
+    return;
+  }
+  setPdfStatus(`${accepted.length}件を保存中…`);
+  try {
+    const db = await openPdfDb();
+    const transaction = db.transaction(PDF_STORE, 'readwrite');
+    const store = transaction.objectStore(PDF_STORE);
+    const monthKey = currentMonthKey();
+    accepted.forEach((file, index) => {
+      const randomId = globalThis.crypto?.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${index}-${Math.random().toString(36).slice(2)}`;
+      store.put({
+        id: randomId,
+        monthKey,
+        name: file.name,
+        type: 'application/pdf',
+        size: file.size,
+        addedAt: Date.now() + index,
+        blob: file
+      });
+    });
+    await waitForTransaction(transaction);
+    const skipped = selected.length - accepted.length;
+    setPdfStatus(`${accepted.length}件を保存しました${skipped ? `（${skipped}件はPDF形式またはサイズ条件外）` : ''}`, 'success');
+    await renderPdfAttachments();
+  } catch (error) {
+    setPdfStatus(`保存できませんでした: ${error.message}`, 'error');
+  } finally {
+    const input = document.getElementById('pdf-input');
+    if (input) input.value = '';
+  }
+}
+
+async function openPdfAttachment(id) {
+  const newWindow = window.open('about:blank', '_blank');
+  try {
+    const file = await getPdfAttachment(id);
+    if (!file) throw new Error('PDFが見つかりません');
+    const url = URL.createObjectURL(file.blob);
+    if (newWindow) {
+      newWindow.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
+    } else {
+      URL.revokeObjectURL(url);
+      setPdfStatus('ポップアップを許可してから、もう一度「開く」を押してください', 'error');
+    }
+  } catch (error) {
+    if (newWindow) newWindow.close();
+    setPdfStatus(error.message, 'error');
+  }
+}
+
+async function deletePdfAttachment(id, name) {
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  try {
+    const db = await openPdfDb();
+    const transaction = db.transaction(PDF_STORE, 'readwrite');
+    transaction.objectStore(PDF_STORE).delete(id);
+    await waitForTransaction(transaction);
+    setPdfStatus('PDFを削除しました', 'success');
+    await renderPdfAttachments();
+  } catch (error) {
+    setPdfStatus(`削除できませんでした: ${error.message}`, 'error');
+  }
+}
+
+function setupPdfAttachments() {
+  const input = document.getElementById('pdf-input');
+  const selectButton = document.getElementById('pdf-select-btn');
+  const dropZone = document.getElementById('pdf-drop-zone');
+  if (!input || !selectButton || !dropZone) return;
+  const chooseFiles = () => input.click();
+  selectButton.addEventListener('click', chooseFiles);
+  dropZone.addEventListener('click', chooseFiles);
+  dropZone.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); chooseFiles(); }
+  });
+  input.addEventListener('change', () => addPdfFiles(input.files));
+  dropZone.addEventListener('dragover', event => { event.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', event => {
+    event.preventDefault();
+    dropZone.classList.remove('dragover');
+    addPdfFiles(event.dataTransfer.files);
+  });
+}
+
 function calcSettle(d) {
-  let mizTotal = d.rent + d.net;
-  let keiTotal = d.elec + (d.gas||0) + d.water + d.food + d.netflix + d.nhk + d.youtube + d.apple + (d.par_comm||0);
+  let mizTotal = num(d.rent) + num(d.net);
+  let keiTotal = num(d.elec) + num(d.gas) + num(d.water) + num(d.food) +
+    num(d.netflix) + num(d.nhk) + num(d.youtube) + num(d.apple) + num(d.par_comm);
   // 臨時支出（月ごと）
-  let rinji = [];
-  if (Array.isArray(d.rinji_items)) rinji = d.rinji_items;
-  else if (d.rinji_items) { try { rinji = JSON.parse(d.rinji_items); } catch(e) {} }
+  const rinji = parseItems(d.rinji_items);
   rinji.forEach(it => {
-    if (it.payer === 'kei') keiTotal += it.val;
-    else mizTotal += it.val;
+    if (it.payer === 'kei') keiTotal += num(it.val);
+    else mizTotal += num(it.val);
   });
   const diff = mizTotal - keiTotal;
-  const settle = Math.round(diff / 2 + d.par_pay / 2);
+  const settle = Math.round(diff / 2 + num(d.par_pay) / 2);
   return { mizTotal, keiTotal, diff, settle };
 }
 
 function getAll() {
-  const seedKeys = new Set(SEED.map(r => `${r.y}-${r.m}`));
-  const seedRows = SEED.map(r => {
-    const key = `${r.y}-${r.m}`;
-    return overrides[key] ? { ...r, ...overrides[key] } : { ...r };
+  const seedKeys = new Set(SEED.map(row => `${row.y}-${row.m}`));
+  const rows = SEED.map(row => {
+    const key = `${row.y}-${row.m}`;
+    return overrides[key] ? { ...row, ...overrides[key] } : { ...row };
   });
-  const extraRows = Object.entries(overrides)
-    .filter(([k]) => !seedKeys.has(k))
-    .map(([k, v]) => {
-      const [y, m] = k.split('-').map(Number);
-      return { y, m, elec:0, water:0, food:0, food_par:70000, rent:150000,
-        net:6000, netflix:0, nhk:0, youtube:0, apple:0,
-        gas:0, par_comm:10000, par_pay:130000, memo:'', ...v };
-    });
-  return [...seedRows, ...extraRows].sort((a,b) => a.y !== b.y ? a.y - b.y : a.m - b.m);
+
+  Object.entries(overrides).forEach(([key, values]) => {
+    if (seedKeys.has(key) || !/^\d{4}-(?:[1-9]|1[0-2])$/.test(key)) return;
+    const [y, m] = key.split('-').map(Number);
+    rows.push({ ...values, y, m, __extra: true });
+  });
+
+  rows.sort((a,b) => a.y !== b.y ? a.y - b.y : a.m - b.m);
+  let previous = null;
+  return rows.map(row => {
+    if (!row.__extra) {
+      previous = row;
+      return row;
+    }
+    const { __extra, ...values } = row;
+    const defaults = previous
+      ? { ...previous, memo:'', food_items:'', rinji_items:'' }
+      : { elec:0, gas:0, water:0, food:0, food_par:70000, rent:150000,
+          net:6000, netflix:0, nhk:0, youtube:0, apple:0,
+          par_comm:10000, par_pay:130000, memo:'', food_items:'', rinji_items:'' };
+    previous = { ...defaults, ...values, y: row.y, m: row.m };
+    return previous;
+  });
 }
 
 function fmt(v) { return Math.round(v).toLocaleString('ja-JP'); }
@@ -837,6 +1144,12 @@ function chartDefaults() {
 
 let charts = {};
 function initCharts() {
+  if (typeof Chart === 'undefined') {
+    document.querySelectorAll('.chart-wrap').forEach(el => {
+      el.innerHTML = '<div style="height:100%;display:grid;place-items:center;font-family:var(--mono);font-size:.7rem;color:var(--muted)">グラフを読み込めませんでした。通信環境を確認してください。</div>';
+    });
+    return;
+  }
   const data = getAll().slice(-18);
   const labels = data.map(fmtLabel);
 
@@ -850,7 +1163,7 @@ function initCharts() {
   };
 
   mkLine('chartMain', [
-    { label: '合計支出', data: data.map(d => d.rent+d.food+d.food_par+d.water+d.elec+(d.gas||0)+d.net), borderColor: '#6b4fd8', backgroundColor: 'rgba(107,79,216,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#6b4fd8', borderWidth: 1.5 },
+    { label: '合計支出', data: data.map(totalExpense), borderColor: '#6b4fd8', backgroundColor: 'rgba(107,79,216,0.06)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#6b4fd8', borderWidth: 1.5 },
     { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#c0335e', backgroundColor: 'rgba(192,51,94,0.04)', fill: false, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#c0335e', borderWidth: 1.5, borderDash: [4,3] },
   ]);
 
@@ -890,6 +1203,8 @@ function updateMetrics() {
   const prev = all[all.length - 2];
 
   const delta = (cur, prv, el) => {
+    el.textContent = '';
+    el.className = 'metric-delta';
     if (!prv || prv === 0) return;
     const d = cur - prv;
     const pct = Math.round(d / prv * 100);
@@ -902,7 +1217,7 @@ function updateMetrics() {
   const waterMonths = last12.filter(d => d.water > 0);
   const avgWater = waterMonths.length ? Math.round(waterMonths.reduce((s,d) => s+d.water, 0) / waterMonths.length) : 0;
   const avgFood = Math.round(last12.reduce((s,d) => s+d.food, 0) / last12.length);
-  const avgTotal = Math.round(last12.reduce((s,d) => s+d.rent+d.food+d.food_par+d.water+d.elec+(d.gas||0)+d.net, 0) / last12.length);
+  const avgTotal = Math.round(last12.reduce((sum, d) => sum + totalExpense(d), 0) / last12.length);
 
   const latestElecGas = latest.elec + (latest.gas||0);
   const prevElecGas = prev ? prev.elec + (prev.gas||0) : undefined;
@@ -912,13 +1227,21 @@ function updateMetrics() {
 
   document.getElementById('m-water').innerHTML = latest.water > 0 ? `${fmt(latest.water)}<span>円</span>` : `—<span>（非請求月）</span>`;
   document.getElementById('m-water-avg').textContent = `有月平均 ¥${fmt(avgWater)}`;
-  if (latest.water > 0) delta(latest.water, prev?.water, document.getElementById('m-water-delta'));
+  const waterDeltaEl = document.getElementById('m-water-delta');
+  waterDeltaEl.textContent = '';
+  if (latest.water > 0) {
+    const previousBilled = all.slice(0, -1).reverse().find(d => num(d.water) > 0);
+    if (previousBilled) {
+      delta(latest.water, previousBilled.water, waterDeltaEl);
+      waterDeltaEl.textContent = waterDeltaEl.textContent.replace('前月比', `前回比 (${fmtLabel(previousBilled)})`);
+    }
+  }
 
   document.getElementById('m-food').innerHTML = `${fmt(latest.food)}<span>円</span>`;
   document.getElementById('m-food-avg').textContent = `12ヶ月平均 ¥${fmt(avgFood)}`;
   delta(latest.food, prev?.food, document.getElementById('m-food-delta'));
 
-  const latestTotal = latest.rent + latest.food + latest.food_par + latest.water + latest.elec + (latest.gas||0) + latest.net;
+  const latestTotal = totalExpense(latest);
   document.getElementById('m-total').innerHTML = `${fmt(latestTotal)}<span>円</span>`;
   document.getElementById('m-total-avg').textContent = `12ヶ月平均 ¥${fmt(avgTotal)}`;
 
@@ -928,9 +1251,9 @@ function updateMetrics() {
   document.getElementById('m-settle-month').textContent = `最新月 ${fmtLabel(latest)}`;
   if (prevSettle !== null) {
     const sd = settle - prevSettle;
-    const sPct = Math.round(sd / prevSettle * 100);
+    const sPct = prevSettle === 0 ? null : Math.round(sd / Math.abs(prevSettle) * 100);
     const sDeltaEl = document.getElementById('m-settle-delta');
-    sDeltaEl.textContent = `前月比 ${sd >= 0 ? '+' : ''}¥${fmt(Math.abs(sd))} (${sd >= 0 ? '+' : ''}${sPct}%)`;
+    sDeltaEl.textContent = `前回比 ${sd >= 0 ? '+' : '-'}¥${fmt(Math.abs(sd))}${sPct === null ? '' : ` (${sd >= 0 ? '+' : '-'}${Math.abs(sPct)}%)`}`;
     sDeltaEl.className = 'metric-delta ' + (sd > 0 ? 'delta-up' : 'delta-dn');
     // 要因分析
     const reasons = [];
@@ -952,14 +1275,9 @@ function updateTable() {
       ? foodItemsArr.map(fi => `${fi.label||'未入力'}: ¥${fmt(fi.val)}`).join(' / ')
       : '';
     const foodCell = foodItemsArr.length > 0
-      ? `¥${fmt(d.food)} <span title="${foodTip}" style="cursor:help;color:var(--accent-food);font-size:0.62rem;border-bottom:1px dotted var(--accent-food)">内訳▸</span>`
+      ? `¥${fmt(d.food)} <span title="${escapeHTML(foodTip)}" style="cursor:help;color:var(--accent-food);font-size:0.62rem;border-bottom:1px dotted var(--accent-food)">内訳▸</span>`
       : `¥${fmt(d.food)}`;
-    let rinjiTotal = 0;
-    let dRinji = [];
-    if (Array.isArray(d.rinji_items)) dRinji = d.rinji_items;
-    else if (d.rinji_items) { try { dRinji = JSON.parse(d.rinji_items); } catch(e) {} }
-    dRinji.forEach(it => { rinjiTotal += it.val || 0; });
-    const total = d.rent+d.food+d.food_par+d.water+d.elec+(d.gas||0)+d.net+rinjiTotal;
+    const total = totalExpense(d);
     html += `<tr>
       <td>${fmtLabel(d)}</td>
       <td>${(d.elec||(d.gas||0)) ? `¥${fmt(d.elec+(d.gas||0))}` : '<span class="zero">—</span>'}</td>
@@ -968,7 +1286,7 @@ function updateTable() {
       <td>¥${fmt(d.net)}</td>
       <td>¥${fmt(total)}</td>
       <td class="highlight">${fmtSettle(settle)}</td>
-      <td style="color:var(--muted); font-size:0.68rem">${d.memo||''}</td>
+      <td style="color:var(--muted); font-size:0.68rem">${escapeHTML(d.memo)}</td>
     </tr>`;
   });
   document.getElementById('tableBody').innerHTML = html;
@@ -979,7 +1297,8 @@ function setupEditDropdowns() {
   const mEl = document.getElementById('editMonth');
   const all = getAll();
   const latest = all[all.length - 1];
-  const years = [...new Set(all.map(d => d.y))];
+  const currentYear = new Date().getFullYear();
+  const years = [...new Set([...all.map(d => d.y), currentYear, currentYear + 1])];
   years.sort((a,b) => b-a).forEach(y => {
     const o = document.createElement('option'); o.value = y; o.textContent = `${y}年`;
     if (y === latest.y) o.selected = true;
@@ -1016,9 +1335,8 @@ function loadEdit() {
   document.querySelectorAll('.adder-sum').forEach(el => el.textContent = '');
   document.querySelectorAll('.adder-input').forEach(el => el.value = '');
   document.querySelectorAll('.adder-label-input').forEach(el => el.value = '');
-  foodItems = []; rinjiItems = [];
-  if (found && found.food_items) { try { foodItems = JSON.parse(found.food_items); } catch(e) {} }
-  if (found && found.rinji_items) { try { rinjiItems = JSON.parse(found.rinji_items); } catch(e) {} }
+  foodItems = found ? parseItems(found.food_items) : [];
+  rinjiItems = found ? parseItems(found.rinji_items) : [];
   document.querySelectorAll('.food-items-list').forEach(el => el.innerHTML = '');
   const foodInputEl = document.getElementById('e_food');
   if (foodInputEl) renderFoodItems(foodInputEl);
@@ -1026,29 +1344,44 @@ function loadEdit() {
   if (!foodItems.length && fpw) fpw.style.display = 'none';
   renderRinjiItems();
   updatePreview();
+  setPdfStatus();
+  renderPdfAttachments();
+}
+
+function formNumber(id, fallback = 0) {
+  const el = document.getElementById(id);
+  return el && el.value !== '' ? Math.max(0, num(el.value, fallback)) : fallback;
+}
+
+function readFormData() {
+  const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'];
+  const data = { memo: document.getElementById('e_memo')?.value || '' };
+  fields.forEach(field => { data[field] = formNumber(`e_${field}`); });
+  data.food_items = foodItems.length ? JSON.stringify(foodItems) : '';
+  data.rinji_items = rinjiItems.length ? JSON.stringify(rinjiItems) : '';
+  return data;
 }
 
 function updatePreview() {
-  const g = id => +document.getElementById(id)?.value || 0;
   const d = {
-    rent: g('e_rent') || 150000,
-    net: g('e_net') || 6000,
-    elec: g('e_elec'),
-    gas: g('e_gas'),
-    water: g('e_water'),
-    food: g('e_food'),
-    netflix: g('e_netflix'),
-    nhk: g('e_nhk'),
-    youtube: g('e_youtube'),
-    apple: g('e_apple'),
-    par_comm: g('e_par_comm') || 10000,
-    par_pay: g('e_par_pay') || 130000,
+    rent: formNumber('e_rent', 150000),
+    net: formNumber('e_net', 6000),
+    elec: formNumber('e_elec'),
+    gas: formNumber('e_gas'),
+    water: formNumber('e_water'),
+    food: formNumber('e_food'),
+    netflix: formNumber('e_netflix'),
+    nhk: formNumber('e_nhk'),
+    youtube: formNumber('e_youtube'),
+    apple: formNumber('e_apple'),
+    par_comm: formNumber('e_par_comm', 10000),
+    par_pay: formNumber('e_par_pay', 130000),
     rinji_items: rinjiItems,
   };
   const { mizTotal, keiTotal, diff, settle } = calcSettle(d);
   document.getElementById('prev-miz').textContent = `¥${fmt(mizTotal)}`;
   document.getElementById('prev-kei').textContent = `¥${fmt(keiTotal)}`;
-  document.getElementById('prev-diff').textContent = `¥${fmt(diff)}`;
+  document.getElementById('prev-diff').textContent = fmtSettle(diff);
   document.getElementById('prev-settle').textContent = fmtSettle(settle);
   const afterMiz = mizTotal - settle;
   const afterKei = keiTotal - d.par_pay + settle;
@@ -1058,10 +1391,9 @@ function updatePreview() {
   // 支出ランキング
   const rankEl = document.getElementById('expense-rank-list');
   if (rankEl) {
-    const g2 = id => +document.getElementById(id)?.value || 0;
     const items = [
       { label: '家賃', val: d.rent, payer: 'Miz' },
-      { label: '父母食費', val: g2('e_food_par') || 70000, payer: '父母' },
+      { label: '父母食費', val: formNumber('e_food_par', 70000), payer: '父母' },
       { label: '電気代', val: d.elec, payer: 'Kei' },
       { label: 'ガス代', val: d.gas, payer: 'Kei' },
       { label: '水道', val: d.water, payer: 'Kei' },
@@ -1078,10 +1410,10 @@ function updatePreview() {
     rankEl.innerHTML = items.map((it, idx) => {
       const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}.`;
       const sub = it.items && it.items.length > 0
-        ? `<span style="color:var(--accent-food);font-size:0.58rem"> (${it.items.map(fi=>fi.label||'?').join('/')})</span>` : '';
+        ? `<span style="color:var(--accent-food);font-size:0.58rem"> (${it.items.map(fi=>escapeHTML(fi.label||'?')).join('/')})</span>` : '';
       return `<div style="font-family:var(--mono);font-size:0.72rem;white-space:nowrap">
         <span style="margin-right:3px">${medal}</span>
-        <span style="color:var(--text)">${it.label}</span>${sub}
+        <span style="color:var(--text)">${escapeHTML(it.label)}</span>${sub}
         <span style="color:var(--muted);margin-left:4px;font-size:0.65rem">(${it.payer})</span>
         <span style="color:var(--text);font-weight:500;margin-left:5px">¥${fmt(it.val)}</span>
       </div>`;
@@ -1094,28 +1426,30 @@ function updatePreview() {
   if (el) el.addEventListener('input', updatePreview);
 });
 
+function refreshDashboard() {
+  updateMetrics();
+  updateTable();
+  initCharts();
+  initDonut();
+  updateInsights();
+}
+
 function saveMonth() {
   const y = +document.getElementById('editYear').value;
   const m = +document.getElementById('editMonth').value;
   const key = `${y}-${m}`;
-  const g = id => { const v = document.getElementById(id)?.value; return v !== '' ? +v : undefined; };
-  const memo = document.getElementById('e_memo')?.value || '';
-  const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','net','par_comm','par_pay'];
-  const obj = { memo };
-  fields.forEach(f => { const v = g('e_'+f); if (v !== undefined) obj[f] = v; });
-  obj.food_items = foodItems.length > 0 ? JSON.stringify(foodItems) : '';
-  obj.rinji_items = rinjiItems.length > 0 ? JSON.stringify(rinjiItems) : '';
-
-  overrides[key] = obj;
+  overrides[key] = readFormData();
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e){}
 
-  updateMetrics(); updateTable(); initCharts(); initDonut(); updateInsights();
+  refreshDashboard();
+  document.getElementById('loadEditBadge').style.display = 'none';
   const btn = document.getElementById('saveBtn');
   btn.textContent = '保存済み ✓'; btn.classList.add('saved');
   setTimeout(() => { btn.textContent = '保存'; btn.classList.remove('saved'); }, 2000);
 }
 
 function initDonut() {
+  if (typeof Chart === 'undefined') return;
   const all = getAll();
   const d = all[all.length - 1];
 
@@ -1129,9 +1463,7 @@ function initDonut() {
     { label: '電話・新聞(父)', val: d.par_comm||0, color: '#888' },
   ].filter(i => i.val > 0);
 
-  let dRinjiItems = [];
-  if (Array.isArray(d.rinji_items)) dRinjiItems = d.rinji_items;
-  else if (d.rinji_items) { try { dRinjiItems = JSON.parse(d.rinji_items); } catch(e) {} }
+  const dRinjiItems = parseItems(d.rinji_items);
   const rinjiTotal = dRinjiItems.reduce((s,it) => s+(it.val||0), 0);
 
   const variable = [
@@ -1139,6 +1471,7 @@ function initDonut() {
     { label: 'ガス代', val: d.gas||0, color: '#3a8fd4' },
     { label: '水道', val: d.water, color: '#0d8f6a' },
     { label: '雑費', val: d.food, color: '#c47a10' },
+    { label: '父母食費', val: d.food_par, color: '#d89a42' },
     { label: '臨時支出', val: rinjiTotal, color: '#c0335e' },
   ].filter(i => i.val > 0);
 
@@ -1166,13 +1499,13 @@ function initDonut() {
           backgroundColor: '#fff', borderColor: 'rgba(0,0,0,0.12)', borderWidth: 1,
           titleColor: '#8a8a96', bodyColor: '#1a1a1e',
           titleFont: { family: 'DM Mono', size: 10 }, bodyFont: { family: 'DM Mono', size: 11 },
-          callbacks: { label: ctx => ` ¥${fmt(ctx.raw)} (${Math.round(ctx.raw/(totalFixed+totalVar)*100)}%)` }
+          callbacks: { label: ctx => ` ¥${fmt(ctx.raw)} (${totalFixed + totalVar ? Math.round(ctx.raw/(totalFixed+totalVar)*100) : 0}%)` }
         }
       }
     }
   });
 
-  const fixedPct = Math.round(totalFixed / (totalFixed + totalVar) * 100);
+  const fixedPct = totalFixed + totalVar ? Math.round(totalFixed / (totalFixed + totalVar) * 100) : 0;
   const mkRow = i => `<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span><span style="display:inline-block;width:6px;height:6px;border-radius:1px;background:${i.color};margin-right:3px;vertical-align:middle"></span>${i.label}</span><span style="color:var(--text)">¥${fmt(i.val)}</span></div>`;
   document.getElementById('donutLegend').innerHTML =
     `<div style="color:var(--text);font-weight:500;margin-bottom:3px">固定 ${fixedPct}%</div>` +
@@ -1265,7 +1598,7 @@ function updateInsights() {
       cls: 'neutral',
       label: '年間精算額合計（直近12ヶ月）',
       val: `¥${fmt(annualSettle)}`,
-      sub: `月平均 ¥${fmt(Math.round(annualSettle/12))}`
+      sub: `月平均 ¥${fmt(Math.round(annualSettle/last12.length))}`
     },
     {
       cls: 'up',
@@ -1305,8 +1638,8 @@ function updateInsights() {
     })(),
     (() => {
       const totalFixed = latest.rent + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
-      const totalAll = latest.rent + latest.food + latest.food_par + latest.water + latest.elec + (latest.gas||0) + latest.net + latest.netflix + latest.nhk + latest.youtube + latest.apple + (latest.par_comm||0);
-      const fixedRatio = Math.round(totalFixed / totalAll * 100);
+      const totalAll = totalExpense(latest);
+      const fixedRatio = totalAll ? Math.round(totalFixed / totalAll * 100) : 0;
       return {
         cls: fixedRatio > 70 ? 'up' : 'neutral',
         label: '固定費率（最新月）',
@@ -1327,9 +1660,9 @@ function updateInsights() {
 
   document.getElementById('insightsGrid').innerHTML = items.map(i => `
     <div class="insight-item ${i.cls}">
-      <div class="insight-label">${i.label}</div>
-      <div class="insight-val">${i.val}</div>
-      <div class="insight-sub">${i.sub}</div>
+      <div class="insight-label">${escapeHTML(i.label)}</div>
+      <div class="insight-val">${escapeHTML(i.val)}</div>
+      <div class="insight-sub">${escapeHTML(i.sub)}</div>
     </div>
   `).join('');
 }
@@ -1409,7 +1742,7 @@ function renderRinjiItems() {
   el.innerHTML = rinjiItems.map((it, i) =>
     `<div class="food-item-row" style="background:${it.payer==='kei'?'rgba(192,51,94,0.06)':'rgba(107,79,216,0.06)'}">
       <span>
-        <span class="fi-label">${it.label || '（名前なし）'}</span>
+        <span class="fi-label">${escapeHTML(it.label || '（名前なし）')}</span>
         <span style="font-size:0.6rem;color:var(--muted);margin-right:4px">(${it.payer==='kei'?'Kei':'Miz'}払)</span>
         ¥${fmt(it.val)}
       </span>
@@ -1422,16 +1755,18 @@ function autoSaveRinji() {
   const y = +document.getElementById('editYear').value;
   const m = +document.getElementById('editMonth').value;
   const key = `${y}-${m}`;
-  if (!overrides[key]) overrides[key] = {};
-  overrides[key].rinji_items = rinjiItems.length > 0 ? JSON.stringify(rinjiItems) : '';
+  // 新規月でも引用中の全フォーム値を保存し、不完全な月レコードを作らない。
+  overrides[key] = { ...(overrides[key] || {}), ...readFormData() };
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e) {}
+  refreshDashboard();
+  document.getElementById('loadEditBadge').style.display = 'none';
 }
 
 function addRinjiItem() {
   const label = document.getElementById('rinji-label').value.trim();
   const val = parseFloat(document.getElementById('rinji-val').value);
   const payer = document.getElementById('rinji-payer').value;
-  if (!val) return;
+  if (!Number.isFinite(val) || val <= 0) return;
   rinjiItems.push({ label: label || '臨時', val: Math.round(val), payer });
   document.getElementById('rinji-label').value = '';
   document.getElementById('rinji-val').value = '';
@@ -1464,7 +1799,7 @@ function renderNamedItems(mainInput, items, removeFnName) {
   if (!listEl) return;
   listEl.innerHTML = items.map((it, i) =>
     `<div class="food-item-row">
-      <span class="fi-label">${it.label || '未入力'}</span>
+      <span class="fi-label">${escapeHTML(it.label || '未入力')}</span>
       <span style="color:var(--accent-food);margin-left:4px">¥${fmt(it.val)}</span>
       <button class="food-item-del" onclick="${removeFnName}(${i})">✕</button>
     </div>`
@@ -1480,7 +1815,7 @@ function renderFoodItems(mainInput) {
     if (total >= 10000 && foodItems.length > 0) {
       wrap.style.display = '';
       previewList.innerHTML = foodItems.map(it =>
-        `<span style="color:var(--accent-food)">¥${fmt(it.val)}</span> ${it.label || '未入力'}`
+        `<span style="color:var(--accent-food)">¥${fmt(it.val)}</span> ${escapeHTML(it.label || '未入力')}`
       ).join('&emsp;/&emsp;');
     } else if (total >= 10000) {
       wrap.style.display = '';
@@ -1501,6 +1836,8 @@ function removeFoodItem(i) {
 
 function setupAdders() {
   document.querySelectorAll('.edit-grid .field input[type="number"]').forEach(input => {
+    input.min = '0';
+    input.step = '1';
     const isFood = input.id === 'e_food';
     const row = document.createElement('div');
     row.className = 'adder-row';
@@ -1526,7 +1863,7 @@ function setupAdders() {
 
     const add = () => {
       const val = parseFloat(adderInput.value);
-      if (!val) return;
+      if (!Number.isFinite(val) || val <= 0) return;
       const current = parseFloat(input.value) || 0;
       input.value = Math.round(current + val);
       if (isFood) {
@@ -1549,9 +1886,9 @@ function setupAdders() {
 (() => {
   document.getElementById('lock').style.display = 'none';
   document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
-  setupEditDropdowns(); setupAdders(); setupFieldDeleteButtons(); applyHiddenFields();
+  setupEditDropdowns(); setupAdders(); setupFieldDeleteButtons(); setupPdfAttachments(); applyHiddenFields();
   renderRinjiItems(); loadEdit();
-  updateMetrics(); updateTable(); initCharts(); initDonut(); updateInsights();
+  refreshDashboard();
 })();
 
 </script>
