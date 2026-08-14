@@ -52,10 +52,20 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 header {
   padding: 2rem 2.5rem 1.2rem;
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: baseline; gap: 1.5rem;
+  display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
 }
 header h1 { font-size: 1.1rem; font-weight: 500; letter-spacing: .04em; color: var(--text); }
 header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+.header-action {
+  font-family: var(--mono); font-size: 0.7rem; padding: 6px 12px;
+  color: #fff; background: var(--accent-settle); border: 0; border-radius: 6px;
+  cursor: pointer;
+}
+.storage-notice {
+  padding: 0.55rem 2.5rem; background: rgba(107,79,216,0.06);
+  border-bottom: 1px solid rgba(107,79,216,0.15); color: var(--muted);
+  font-family: var(--mono); font-size: 0.64rem;
+}
 
 .dashboard {
   padding: 1.5rem 2.5rem 3rem;
@@ -191,7 +201,10 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 }
 .edit-header {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 1.2rem;
+  margin: -1.25rem -1.5rem 1.2rem; padding: 0.85rem 1.5rem;
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(255,255,255,0.96); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border); border-radius: 10px 10px 0 0;
 }
 .edit-header h2 {
   font-family: var(--mono);
@@ -226,6 +239,30 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 }
 .save-btn:hover { opacity: 0.85; }
 .save-btn.saved { background: var(--accent-water); color: #fff; }
+.btn-secondary { background: var(--surface2) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+.save-state, .completion-state {
+  font-family: var(--mono); font-size: 0.62rem; padding: 3px 8px;
+  border-radius: 4px; white-space: nowrap;
+}
+.save-state { color: var(--accent-settle); background: rgba(107,79,216,0.08); }
+.save-state.complete { color: var(--accent-water); background: rgba(13,143,106,0.08); }
+.completion-state { color: var(--muted); background: var(--surface2); border: 1px solid var(--border); }
+.draft-badge {
+  display: inline-block; margin-left: 4px; padding: 1px 5px; border-radius: 3px;
+  font-size: 0.55rem; color: var(--accent-food); background: rgba(196,122,16,0.1);
+}
+.advanced-tools { position: relative; }
+.advanced-tools summary {
+  list-style: none; cursor: pointer; font-family: var(--mono); font-size: 0.65rem;
+  color: var(--muted); padding: 5px 8px;
+}
+.advanced-tools summary::-webkit-details-marker { display: none; }
+.advanced-tools[open] .advanced-tools-menu {
+  display: flex; gap: 5px; position: absolute; right: 0; top: calc(100% + 5px);
+  padding: 7px; border: 1px solid var(--border); border-radius: 7px;
+  background: var(--surface); box-shadow: 0 6px 20px rgba(0,0,0,0.12); z-index: 30;
+}
+.advanced-tools-menu { display: none; }
 
 .edit-grid {
   display: grid;
@@ -462,10 +499,13 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 }
 @media (max-width: 600px) {
   header { padding: 1.25rem 1rem 1rem; }
+  .storage-notice { padding: 0.5rem 1rem; line-height: 1.5; }
   .dashboard { padding: 0.75rem 0.75rem 2rem; }
   .metrics-row { grid-template-columns: repeat(2, 1fr); }
-  .edit-grid { grid-template-columns: repeat(2, 1fr); }
+  .edit-grid { grid-template-columns: 1fr; }
   .insights-grid { grid-template-columns: 1fr; }
+  .edit-header { align-items: flex-start; }
+  .month-select-row { width: 100%; }
   .settle-preview { flex-direction: column; gap: 0.75rem; }
   .settle-item { width: 100%; justify-content: space-between; }
   .metric-value { font-size: 1.2rem; }
@@ -487,8 +527,10 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
 <header>
   <h1>家計ダッシュボード</h1>
   <span id="headerDate"></span>
+  <button type="button" class="header-action" id="jumpToEdit">7月分を入力</button>
   <span style="font-family:var(--mono);font-size:0.7rem;color:rgba(107,79,216,0.5);margin-left:auto">kei1840</span>
 </header>
+<div class="storage-notice">入力内容とPDFはこの端末に保存されます。GitHub上の履歴へは自動同期されません。月末にバックアップを書き出してください。</div>
 
 <div class="dashboard">
 
@@ -592,9 +634,19 @@ header span { font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
         <select id="editYear"></select>
         <select id="editMonth"></select>
         <span id="loadEditBadge" style="display:none;font-family:var(--mono);font-size:0.65rem;color:var(--accent-water);background:rgba(13,143,106,0.1);border:1px solid rgba(13,143,106,0.25);border-radius:4px;padding:2px 8px;">先月から引用</span>
-        <button class="save-btn" id="saveBtn" onclick="saveMonth()">保存</button>
-        <button class="save-btn btn-test" id="testBtn" onclick="fillTestData()">テスト入力</button>
-        <button class="save-btn btn-clear" id="clearTestBtn" onclick="clearTestData()" style="display:none">クリア</button>
+        <span class="completion-state" id="completionState">入力 0/4</span>
+        <span class="save-state" id="saveState">確認中…</span>
+        <button class="save-btn" id="saveBtn" onclick="saveMonth()">確定保存</button>
+        <button class="save-btn btn-secondary" type="button" id="backupBtn" onclick="exportBackup()">バックアップ</button>
+        <button class="save-btn btn-secondary" type="button" id="restoreBtn" onclick="document.getElementById('backupInput').click()">復元</button>
+        <input type="file" id="backupInput" accept="application/json,.json" hidden>
+        <details class="advanced-tools">
+          <summary>その他 ▾</summary>
+          <div class="advanced-tools-menu">
+            <button class="save-btn btn-test" id="testBtn" onclick="fillTestData()">テスト入力</button>
+            <button class="save-btn btn-clear" id="clearTestBtn" onclick="clearTestData()" style="display:none">クリア</button>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -779,7 +831,7 @@ const SEED = [
   {y:2026,m:2,elec:61400,water:0,food:12660,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:3,elec:49656,water:15100,food:30021,food_par:70000,rent:150000,net:6000,netflix:2300,nhk:3000,youtube:1800,apple:2000,kei_other:0,miz_other:0,par_comm:10000,par_pay:130000,memo:''},
   {y:2026,m:6,elec:31190,gas:7595,water:13860,food:40360,food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,par_comm:10000,par_pay:250000,memo:'特記事項',rinji_items:'[{"label":"家更新","val":209000,"payer":"kei"},{"label":"火災保険","val":24000,"payer":"kei"}]'},
-  {y:2026,m:7,elec:0,gas:0,water:0,food:0,food_detail:'',food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,abema:1180,newspaper:5000,rakuten_mobile:5000,par_comm:0,par_pay:130000,memo:''},
+  {y:2026,m:7,elec:0,gas:0,water:0,food:0,food_detail:'',food_par:70000,rent:150000,net:6000,netflix:2000,nhk:2000,youtube:2000,apple:2000,abema:1180,newspaper:5000,rakuten_mobile:5000,par_comm:0,par_pay:130000,memo:'',status:'draft'},
 ];
 
 const STORAGE_KEY = 'household_v2';
@@ -1146,6 +1198,10 @@ function getAll() {
   });
 }
 
+function getAnalyticsData() {
+  return getAll().filter(row => row.status !== 'draft');
+}
+
 function fmt(v) { return Math.round(v).toLocaleString('ja-JP'); }
 function fmtSettle(v) { return v < 0 ? `-¥${fmt(Math.abs(v))}` : `¥${fmt(v)}`; }
 function fmtLabel(d) { return `${d.y}/${String(d.m).padStart(2,'0')}`; }
@@ -1174,7 +1230,7 @@ function initCharts() {
     });
     return;
   }
-  const data = getAll().slice(-18);
+  const data = getAnalyticsData().slice(-18);
   const labels = data.map(fmtLabel);
 
   const mkLine = (id, datasets) => {
@@ -1221,7 +1277,7 @@ function initCharts() {
 }
 
 function updateMetrics() {
-  const all = getAll();
+  const all = getAnalyticsData();
   const last12 = all.slice(-12);
   const latest = all[all.length - 1];
   const prev = all[all.length - 2];
@@ -1272,7 +1328,7 @@ function updateMetrics() {
   const { settle } = calcSettle(latest);
   const prevSettle = prev ? calcSettle(prev).settle : null;
   document.getElementById('m-settle').innerHTML = `${fmtSettle(settle)}<span></span>`;
-  document.getElementById('m-settle-month').textContent = `最新月 ${fmtLabel(latest)}`;
+  document.getElementById('m-settle-month').textContent = `最新確定月 ${fmtLabel(latest)}`;
   if (prevSettle !== null) {
     const sd = settle - prevSettle;
     const sPct = prevSettle === 0 ? null : Math.round(sd / Math.abs(prevSettle) * 100);
@@ -1303,7 +1359,7 @@ function updateTable() {
       : `¥${fmt(d.food)}`;
     const total = totalExpense(d);
     html += `<tr>
-      <td>${fmtLabel(d)}</td>
+      <td>${fmtLabel(d)}${d.status === 'draft' ? '<span class="draft-badge">下書き</span>' : ''}</td>
       <td>${(d.elec||(d.gas||0)) ? `¥${fmt(d.elec+(d.gas||0))}` : '<span class="zero">—</span>'}</td>
       <td>${d.water ? `¥${fmt(d.water)}` : '<span class="zero">—</span>'}</td>
       <td>${foodCell}</td>
@@ -1341,9 +1397,102 @@ function setupEditDropdowns() {
   mEl.addEventListener('change', loadEdit);
 }
 
+const REQUIRED_MONTHLY_FIELDS = [
+  { id:'e_elec', label:'電気代' },
+  { id:'e_gas', label:'ガス代' },
+  { id:'e_food', label:'雑費' },
+  { id:'e_par_pay', label:'父母支払分' },
+];
+let isLoadingEdit = false;
+let draftSaveTimer = null;
+let pendingDraft = null;
+let currentEditKey = null;
+
+function selectedMonthKey() {
+  return `${document.getElementById('editYear').value}-${document.getElementById('editMonth').value}`;
+}
+
+function setSaveState(text, complete = false) {
+  const el = document.getElementById('saveState');
+  if (!el) return;
+  el.textContent = text;
+  el.className = `save-state${complete ? ' complete' : ''}`;
+}
+
+function savedTimeLabel(iso) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' });
+}
+
+function updateCompletion() {
+  const missing = REQUIRED_MONTHLY_FIELDS.filter(field => document.getElementById(field.id)?.value === '');
+  const completeCount = REQUIRED_MONTHLY_FIELDS.length - missing.length;
+  const el = document.getElementById('completionState');
+  if (el) {
+    el.textContent = `入力 ${completeCount}/${REQUIRED_MONTHLY_FIELDS.length}`;
+    el.title = missing.length ? `未入力: ${missing.map(field => field.label).join('、')}` : '主要項目の入力完了';
+  }
+  return missing;
+}
+
+function updateInputMonthLabel() {
+  const year = document.getElementById('editYear').value;
+  const month = document.getElementById('editMonth').value;
+  const button = document.getElementById('jumpToEdit');
+  if (button) button.textContent = `${month}月分を入力`;
+  document.querySelector('.edit-header h2').textContent = `月次入力 ${year}/${String(month).padStart(2,'0')}`;
+}
+
+function persistDraft(key = currentEditKey || selectedMonthKey(), data = readFormData('draft'), updateUi = true) {
+  overrides[key] = data;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+    if (updateUi && key === currentEditKey) {
+      setSaveState(`下書き保存 ${savedTimeLabel(data.updated_at)}`);
+      document.getElementById('loadEditBadge').style.display = 'none';
+    }
+    refreshDashboard();
+  } catch (error) {
+    if (updateUi && key === currentEditKey) setSaveState('保存できません');
+  }
+}
+
+function scheduleDraftSave() {
+  if (isLoadingEdit) return;
+  updateCompletion();
+  setSaveState('入力中…');
+  clearTimeout(draftSaveTimer);
+  pendingDraft = { key: currentEditKey || selectedMonthKey(), data: readFormData('draft') };
+  draftSaveTimer = setTimeout(() => {
+    const draft = pendingDraft;
+    draftSaveTimer = null;
+    pendingDraft = null;
+    if (draft) persistDraft(draft.key, draft.data);
+  }, 700);
+}
+
+function flushPendingDraft() {
+  if (!pendingDraft) return;
+  clearTimeout(draftSaveTimer);
+  const draft = pendingDraft;
+  draftSaveTimer = null;
+  pendingDraft = null;
+  overrides[draft.key] = draft.data;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch (error) {}
+}
+
 function loadEdit() {
+  if (draftSaveTimer && pendingDraft) {
+    clearTimeout(draftSaveTimer);
+    persistDraft(pendingDraft.key, pendingDraft.data, false);
+  }
+  draftSaveTimer = null;
+  pendingDraft = null;
+  isLoadingEdit = true;
   const y = +document.getElementById('editYear').value;
   const m = +document.getElementById('editMonth').value;
+  currentEditKey = `${y}-${m}`;
   const all = getAll();
   const found = all.find(d => d.y === y && d.m === m);
   // 該当月がなければ直前月のデータをデフォルトとして使う（メモはクリア）
@@ -1374,8 +1523,13 @@ function loadEdit() {
   if (!foodItems.length && !base.food_detail && fpw) fpw.style.display = 'none';
   renderRinjiItems();
   updatePreview();
+  updateCompletion();
+  updateInputMonthLabel();
+  const savedAt = savedTimeLabel(base.updated_at);
+  setSaveState(found?.status === 'draft' ? `下書き保存${savedAt ? ` ${savedAt}` : ''}` : found ? `確定済み${savedAt ? ` ${savedAt}` : ''}` : '未保存', found && found.status !== 'draft');
   setPdfStatus();
   renderPdfAttachments();
+  isLoadingEdit = false;
 }
 
 function formNumber(id, fallback = 0) {
@@ -1383,13 +1537,15 @@ function formNumber(id, fallback = 0) {
   return el && el.value !== '' ? Math.max(0, num(el.value, fallback)) : fallback;
 }
 
-function readFormData() {
+function readFormData(status = 'draft') {
   const fields = ['elec','gas','water','food','food_par','rent','netflix','nhk','youtube','apple','abema','net','newspaper','rakuten_mobile','par_comm','par_pay'];
   const data = { memo: document.getElementById('e_memo')?.value || '' };
   fields.forEach(field => { data[field] = formNumber(`e_${field}`); });
   data.food_detail = document.getElementById('e_food_detail')?.value.trim() || '';
   data.food_items = foodItems.length ? JSON.stringify(foodItems) : '';
   data.rinji_items = rinjiItems.length ? JSON.stringify(rinjiItems) : '';
+  data.status = status;
+  data.updated_at = new Date().toISOString();
   return data;
 }
 
@@ -1460,12 +1616,14 @@ function updatePreview() {
 
 ['e_elec','e_gas','e_water','e_food','e_food_par','e_rent','e_netflix','e_nhk','e_youtube','e_apple','e_abema','e_net','e_newspaper','e_rakuten_mobile','e_par_comm','e_par_pay'].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('input', updatePreview);
+  if (el) el.addEventListener('input', () => { updatePreview(); scheduleDraftSave(); });
 });
 document.getElementById('e_food_detail')?.addEventListener('input', () => {
   const foodInput = document.getElementById('e_food');
   if (foodInput) renderFoodItems(foodInput);
+  scheduleDraftSave();
 });
+document.getElementById('e_memo')?.addEventListener('input', scheduleDraftSave);
 
 function refreshDashboard() {
   updateMetrics();
@@ -1479,19 +1637,34 @@ function saveMonth() {
   const y = +document.getElementById('editYear').value;
   const m = +document.getElementById('editMonth').value;
   const key = `${y}-${m}`;
-  overrides[key] = readFormData();
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e){}
+  const missing = updateCompletion();
+  if (missing.length && !confirm(`未入力の項目があります（${missing.map(field => field.label).join('、')}）。このまま確定しますか？`)) return;
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = null;
+  pendingDraft = null;
+  const previous = overrides[key];
+  overrides[key] = readFormData('complete');
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+  } catch (error) {
+    if (previous === undefined) delete overrides[key];
+    else overrides[key] = previous;
+    setSaveState('保存できません');
+    alert('端末への保存に失敗しました。ブラウザの保存容量やプライベートモードを確認してください。');
+    return;
+  }
 
   refreshDashboard();
   document.getElementById('loadEditBadge').style.display = 'none';
+  setSaveState('確定済み', true);
   const btn = document.getElementById('saveBtn');
-  btn.textContent = '保存済み ✓'; btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = '保存'; btn.classList.remove('saved'); }, 2000);
+  btn.textContent = '確定済み ✓'; btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = '確定保存'; btn.classList.remove('saved'); }, 2000);
 }
 
 function initDonut() {
   if (typeof Chart === 'undefined') return;
-  const all = getAll();
+  const all = getAnalyticsData();
   const d = all[all.length - 1];
 
   const fixed = [
@@ -1557,7 +1730,7 @@ function initDonut() {
 }
 
 function updateInsights() {
-  const all = getAll();
+  const all = getAnalyticsData();
   const latest = all[all.length - 1];
   const last12 = all.slice(-12);
   const prev12 = all.slice(-24, -12);
@@ -1729,6 +1902,55 @@ function toggleTable() {
 }
 
 const TEST_KEY = 'household_test_backup';
+
+function exportBackup() {
+  flushPendingDraft();
+  const payload = {
+    version: 1,
+    exported_at: new Date().toISOString(),
+    note: 'PDFファイルはこのバックアップに含まれません',
+    overrides,
+    hidden_fields: [...hiddenFields],
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `household-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setSaveState('バックアップ完了');
+}
+
+async function restoreBackup(file) {
+  if (!file) return;
+  try {
+    const payload = JSON.parse(await file.text());
+    if (!payload || typeof payload.overrides !== 'object' || Array.isArray(payload.overrides)) {
+      throw new Error('対応するバックアップ形式ではありません');
+    }
+    if (!confirm('現在の端末内入力をバックアップ内容で置き換えます。続けますか？')) return;
+    overrides = payload.overrides;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+    if (Array.isArray(payload.hidden_fields)) {
+      hiddenFields = new Set(payload.hidden_fields);
+      saveHiddenFields();
+    }
+    location.reload();
+  } catch (error) {
+    alert(`復元できませんでした: ${error.message}`);
+  } finally {
+    document.getElementById('backupInput').value = '';
+  }
+}
+
+function setupBackupControls() {
+  document.getElementById('backupInput')?.addEventListener('change', event => restoreBackup(event.target.files?.[0]));
+  window.addEventListener('beforeunload', flushPendingDraft);
+}
+
 function fillTestData() {
   const y = +document.getElementById('editYear').value;
   const m = +document.getElementById('editMonth').value;
@@ -1762,6 +1984,7 @@ function fillTestData() {
   });
   document.getElementById('e_memo').value = '[テストデータ]';
   updatePreview();
+  updateCompletion();
   document.getElementById('clearTestBtn').style.display = '';
   document.getElementById('testBtn').style.display = 'none';
 }
@@ -1777,6 +2000,7 @@ function clearTestData() {
   const foodDetailEl = document.getElementById('e_food_detail');
   if (foodDetailEl) foodDetailEl.value = backup.food_detail || '';
   updatePreview();
+  updateCompletion();
   sessionStorage.removeItem(TEST_KEY);
   document.getElementById('clearTestBtn').style.display = 'none';
   document.getElementById('testBtn').style.display = '';
@@ -1806,10 +2030,14 @@ function autoSaveRinji() {
   const m = +document.getElementById('editMonth').value;
   const key = `${y}-${m}`;
   // 新規月でも引用中の全フォーム値を保存し、不完全な月レコードを作らない。
-  overrides[key] = { ...(overrides[key] || {}), ...readFormData() };
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = null;
+  pendingDraft = null;
+  overrides[key] = { ...(overrides[key] || {}), ...readFormData('draft') };
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides)); } catch(e) {}
   refreshDashboard();
   document.getElementById('loadEditBadge').style.display = 'none';
+  setSaveState('下書き保存済み');
 }
 
 function addRinjiItem() {
@@ -1893,9 +2121,11 @@ function removeFoodItem(i) {
 }
 
 function setupAdders() {
+  const adderFields = new Set(['e_elec','e_gas','e_water','e_food','e_par_pay']);
   document.querySelectorAll('.edit-grid .field input[type="number"]').forEach(input => {
     input.min = '0';
     input.step = '1';
+    if (!adderFields.has(input.id)) return;
     const isFood = input.id === 'e_food';
     const row = document.createElement('div');
     row.className = 'adder-row';
@@ -1941,10 +2171,19 @@ function setupAdders() {
   });
 }
 
+function setupMonthlyWorkflow() {
+  const metrics = document.querySelector('.metrics-row');
+  const editPanel = document.querySelector('.edit-panel');
+  if (metrics && editPanel) metrics.after(editPanel);
+  document.getElementById('jumpToEdit')?.addEventListener('click', () => {
+    editPanel?.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+}
+
 (() => {
   document.getElementById('lock').style.display = 'none';
   document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric'});
-  setupEditDropdowns(); setupAdders(); setupFieldDeleteButtons(); setupPdfAttachments(); applyHiddenFields();
+  setupMonthlyWorkflow(); setupEditDropdowns(); setupAdders(); setupFieldDeleteButtons(); setupPdfAttachments(); setupBackupControls(); applyHiddenFields();
   renderRinjiItems(); loadEdit();
   refreshDashboard();
 })();
