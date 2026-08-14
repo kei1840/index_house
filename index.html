@@ -6,7 +6,7 @@
 <title>家計ダッシュボード</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 #lock {
   position: fixed; inset: 0; background: #f4f4f0;
@@ -756,6 +756,178 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
   .chart-food .chart-wrap.h200, .chart-settle .chart-wrap.h200 { height: 220px; }
   .closing-strip { align-items: flex-start; flex-direction: column; }
 }
+
+/* 家計簿・月報 — anti-template direction */
+:root {
+  --bg: #f3eee2;
+  --surface: #fffdf7;
+  --surface2: #ebe4d5;
+  --border: rgba(48,45,39,.22);
+  --text: #292722;
+  --muted: #777166;
+  --accent-elec: #2c6882;
+  --accent-water: #32745b;
+  --accent-food: #b77a2c;
+  --accent-kei: #c74336;
+  --accent-settle: #c74336;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Zen Kaku Gothic New', sans-serif;
+  --display: 'Shippori Mincho', serif;
+}
+body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(90deg, transparent 0, transparent 6.8vw, rgba(199,67,54,.12) 6.8vw, rgba(199,67,54,.12) calc(6.8vw + 1px), transparent calc(6.8vw + 1px)),
+    repeating-linear-gradient(0deg, transparent 0, transparent 31px, rgba(44,104,130,.055) 31px, rgba(44,104,130,.055) 32px);
+  color: var(--text);
+}
+header.site-header {
+  min-height: 78px; padding: 0 3vw; color: var(--text); background: rgba(243,238,226,.96);
+  border-top: 5px solid var(--accent-kei); border-bottom: 3px double rgba(48,45,39,.5);
+}
+.brand { gap: .7rem; }
+.brand-mark {
+  width: 42px; height: 42px; border-radius: 3px; color: var(--accent-kei); background: transparent;
+  border: 2px solid var(--accent-kei); font: 700 .68rem var(--display); writing-mode: vertical-rl;
+}
+.brand-name { font: 700 1.02rem var(--display); letter-spacing: .04em; }
+.brand-sub { color: var(--muted); font: 400 .52rem var(--mono); letter-spacing: .1em; }
+header.site-header #headerDate { color: var(--muted); }
+.header-action {
+  color: #fff; background: var(--accent-kei); border: 1px solid var(--accent-kei);
+  border-radius: 2px; box-shadow: 4px 4px 0 rgba(199,67,54,.16);
+}
+.header-action:hover { box-shadow: 2px 2px 0 rgba(199,67,54,.2); }
+.storage-notice {
+  padding: .55rem 3vw; color: var(--muted); background: rgba(255,253,247,.7);
+  border-bottom: 1px dashed rgba(48,45,39,.28);
+}
+.storage-notice strong { color: var(--accent-kei); font-family: var(--display); letter-spacing: .08em; }
+
+.dashboard { padding-top: 1.8rem; }
+.hero {
+  min-height: 510px; grid-template-columns: minmax(0,1.15fr) minmax(390px,.85fr);
+  background: var(--surface); color: var(--text); border: 1px solid rgba(48,45,39,.5);
+  border-radius: 0; box-shadow: 9px 9px 0 rgba(48,45,39,.1);
+}
+.hero::before {
+  opacity: 1; background:
+    linear-gradient(90deg, transparent 0 68px, rgba(199,67,54,.14) 68px 69px, transparent 69px),
+    repeating-linear-gradient(0deg, transparent 0 39px, rgba(44,104,130,.065) 39px 40px);
+}
+.hero-copy { padding: clamp(2.5rem,5vw,5.5rem); justify-content: flex-start; }
+.hero-eyebrow {
+  width: fit-content; padding: .35rem .65rem; color: var(--accent-kei); background: var(--surface);
+  border: 1px solid var(--accent-kei); font: 600 .66rem var(--display); letter-spacing: .12em;
+}
+.hero h1 {
+  max-width: 780px; margin: 2rem 0 1.2rem; color: var(--text);
+  font: 700 clamp(3.1rem,6.2vw,7.1rem)/.98 var(--display); letter-spacing: -.055em;
+}
+.hero h1 span { display: block; margin-bottom: .7rem; color: var(--accent-kei); font: 600 .18em var(--mono); letter-spacing: .18em; }
+.hero h1 em { color: var(--text); font-style: normal; }
+.hero-lead { max-width: 520px; color: var(--muted); font: 500 .83rem/2 var(--sans); }
+.hero-actions { margin-top: 1.8rem; }
+.hero-cta {
+  padding: .85rem 1.2rem; color: #fff; background: var(--accent-elec); border: 1px solid var(--accent-elec);
+  border-radius: 2px; font-family: var(--sans); font-weight: 700;
+}
+.hero-caption { color: var(--muted); font-size: .56rem; }
+.hero-foot { gap: 0; margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(48,45,39,.3); }
+.hero-foot div { min-width: 118px; padding-right: 1.1rem; margin-right: 1.1rem; border-right: 1px solid rgba(48,45,39,.22); }
+.hero-foot div:last-child { border-right: 0; }
+.hero-foot b { color: var(--text); font: 700 1.35rem var(--display); }
+.hero-foot span { color: var(--muted); font-family: var(--sans); letter-spacing: .04em; }
+.hero-settlement {
+  margin: 1.15rem; padding: clamp(2rem,3vw,3.2rem); color: #fff; background: var(--accent-kei);
+  border-radius: 0; border: 1px solid #8d2e25; box-shadow: inset 0 0 0 5px rgba(255,255,255,.13);
+}
+.hero-settlement::after {
+  content: '済'; right: 1.2rem; bottom: -1rem; color: rgba(255,255,255,.1);
+  font: 800 12rem/.9 var(--display); transform: rotate(-10deg);
+}
+.hero-index { color: rgba(255,255,255,.68); font-family: var(--display); letter-spacing: .14em; }
+.hero-month { font: 700 clamp(2.7rem,4.6vw,5.2rem)/1 var(--display); letter-spacing: -.04em; }
+.hero-label { font-family: var(--sans); }
+.hero-value { font-family: var(--display); letter-spacing: -.04em; }
+.hero-rule { border-top: 1px dashed rgba(255,255,255,.6); background: transparent; }
+.hero-stat span, .hero-status { font-family: var(--sans); }
+.hero-status { border-color: rgba(255,255,255,.55); }
+
+.section-heading {
+  grid-template-columns: 86px minmax(0,1fr) minmax(240px,.4fr); padding-top: 4rem;
+  border-bottom: 3px double rgba(48,45,39,.6);
+}
+.section-number { color: var(--accent-kei); font: 600 .7rem var(--display); }
+.section-heading h2 { font: 700 clamp(1.8rem,3vw,3.25rem)/1 var(--display); letter-spacing: -.03em; }
+.section-heading p { font-family: var(--sans); }
+
+.metrics-row { border-color: rgba(48,45,39,.5); background: rgba(255,253,247,.82); }
+.metric-card { background: transparent; border-color: rgba(48,45,39,.22); }
+.metric-card.settle { color: #fff; background: var(--accent-kei); }
+.metric-card.settle .metric-value { color: #fff; font-family: var(--display); }
+.metric-card.settle .metric-label, .metric-card.settle .metric-sub { color: rgba(255,255,255,.72); }
+.metric-label { font-family: var(--display); letter-spacing: .08em; }
+.metric-value { font-family: var(--display); letter-spacing: -.02em; }
+
+.edit-panel {
+  background: rgba(255,253,247,.94); border: 2px solid var(--accent-elec);
+  box-shadow: 10px 10px 0 rgba(44,104,130,.11);
+}
+.edit-header {
+  color: #fff; background: rgba(44,104,130,.97); border-bottom-color: #1c4a60;
+}
+.edit-header h2 { color: #fff; font: 700 .86rem var(--display); letter-spacing: .08em; }
+.month-select-row select { border-color: rgba(255,255,255,.55); }
+.completion-state, .save-state { color: #fff; border-color: rgba(255,255,255,.55); background: rgba(255,255,255,.1); }
+.save-state.complete { color: var(--accent-elec); background: #fff; }
+.save-btn { color: var(--accent-elec); background: #fff; border: 1px solid #fff; }
+.btn-secondary { color: #fff !important; border-color: rgba(255,255,255,.7) !important; }
+.advanced-tools summary { color: #fff; }
+.field input, .field textarea { background: #fffdf9; border-color: rgba(44,104,130,.32); }
+.field input:focus, .field textarea:focus { box-shadow: inset 4px 0 0 var(--accent-elec); }
+.adder-btn, #rinji-add-btn { background: var(--accent-elec) !important; border-color: var(--accent-elec) !important; }
+.pdf-drop-zone:hover, .pdf-drop-zone.dragover { border-color: var(--accent-elec); background: rgba(44,104,130,.08); }
+.settle-preview { color: var(--text); background: #e5edf0; border-color: var(--accent-elec); }
+.settle-item label, .food-breakdown, .settle-preview [style*="color:var(--muted)"] { color: var(--muted) !important; }
+.settle-highlight { color: var(--accent-kei); }
+
+.chart-main, .chart-util, .chart-food, .chart-settle, .chart-donut {
+  color: var(--text); background: rgba(255,253,247,.92); border-color: rgba(48,45,39,.45);
+  box-shadow: 5px 5px 0 rgba(48,45,39,.06);
+}
+.chart-main { border-top-color: var(--accent-elec); }
+.chart-util { border-top-color: var(--accent-water); }
+.chart-food { border-top-color: var(--accent-food); }
+.chart-settle { border-top-color: var(--accent-kei); }
+.chart-donut { border-top-color: #6d6155; }
+.chart-main .card-title, .chart-util .card-title, .chart-food .card-title,
+.chart-settle .card-title, .chart-donut .card-title { color: var(--text); font-family: var(--display); }
+.chart-main .legend-row, .chart-util .legend-row { color: var(--muted); }
+#donutLegend { color: var(--muted) !important; }
+#donutLegend [style*="color:var(--text)"] { color: var(--text) !important; }
+.insights-card { background: rgba(255,253,247,.92); border-color: rgba(48,45,39,.5); }
+.insight-item { background: #e9e3d7; }
+.table-card { background: rgba(255,253,247,.92); border-top-color: var(--accent-elec); }
+.draft-badge { color: #fff; background: var(--accent-kei); }
+.closing-strip {
+  color: var(--text); background: var(--surface); border: 3px double rgba(48,45,39,.65);
+}
+.closing-strip span { color: var(--accent-kei); font-family: var(--display); }
+.closing-strip h2 { font-family: var(--display); letter-spacing: -.04em; }
+.closing-strip .hero-cta { color: #fff; background: var(--accent-elec); }
+
+@media (max-width: 760px) {
+  body { background-image: repeating-linear-gradient(0deg, transparent 0, transparent 31px, rgba(44,104,130,.05) 31px, rgba(44,104,130,.05) 32px); }
+  header.site-header { min-height: 64px; }
+  .brand-mark { width: 34px; height: 34px; }
+  .hero { grid-template-columns: 1fr; }
+  .hero-copy { padding: 2rem 1.25rem 1.4rem; }
+  .hero h1 { font-size: clamp(2.7rem,14vw,4.3rem); }
+  .hero-settlement { min-height: 320px; }
+  .hero-foot div { min-width: 0; flex: 1; }
+  .section-heading { grid-template-columns: 52px 1fr; }
+}
 </style>
 </head>
 <body>
@@ -770,40 +942,40 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
 
 <header class="site-header">
   <div class="brand">
-    <span class="brand-mark">KH</span>
-    <span><span class="brand-name">KEI HOUSEHOLD</span><span class="brand-sub">MONTHLY MONEY RECORD</span></span>
+    <span class="brand-mark">家計</span>
+    <span><span class="brand-name">成澤家の家計簿</span><span class="brand-sub">KEI・MIZ・父母　四人分</span></span>
   </div>
   <div class="nav-meta">
     <span id="headerDate"></span>
-    <button type="button" class="header-action" id="jumpToEdit">7月を締める ↘</button>
+    <button type="button" class="header-action" id="jumpToEdit">7月を記帳する</button>
   </div>
 </header>
-<div class="storage-notice"><strong>LOCAL FIRST</strong><span>同じブラウザでは自動保存。グラフは「確定して反映」後に更新され、別端末には同期されません。</span></div>
+<div class="storage-notice"><strong>保存について</strong><span>入力途中はこのブラウザへ自動保存。「確定して反映」で月報とグラフを更新します。</span></div>
 
 <div class="dashboard">
 
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <span class="hero-eyebrow">HOUSEHOLD OS / KEI + MIZ + FAMILY</span>
-      <h1 id="hero-title">暮らしの数字を、<em>ひとつに。</em></h1>
-      <p class="hero-lead">毎月の支払い、家族分、ふたりの精算まで。散らばる数字を一度だけ入力して、次の月を少し軽くする家計の記録です。</p>
+      <span class="hero-eyebrow">第39号・四人家計</span>
+      <h1 id="hero-title"><span>2026年</span><em>七月</em> 家計精算票</h1>
+      <p class="hero-lead">KeiとMizの支払い、父母分、雑費の内訳まで。七月の家計を一枚の帳面に確定しました。</p>
       <div class="hero-actions">
-        <button type="button" class="hero-cta js-jump-edit">今月を入力する →</button>
-        <span class="hero-caption">DRAFT AUTO-SAVED / PDF READY</span>
+        <button type="button" class="hero-cta js-jump-edit">月次帳を開く</button>
+        <span class="hero-caption">下書き自動保存・領収PDF添付可</span>
       </div>
       <div class="hero-foot">
-        <div><b>38</b><span>MONTHS RECORDED</span></div>
-        <div><b>4</b><span>PEOPLE TOGETHER</span></div>
-        <div><b>1</b><span>MONTHLY CLOSE</span></div>
+        <div><b>39</b><span>記録済み月数</span></div>
+        <div><b>4人</b><span>家計人数</span></div>
+        <div><b>月1回</b><span>締め日</span></div>
       </div>
     </div>
     <aside class="hero-settlement" aria-label="最新確定月の概要">
       <div>
-        <span class="hero-index">LATEST / CLOSED</span>
+        <span class="hero-index">最新確定月</span>
         <div class="hero-month" id="heroLatestMonth">—</div>
       </div>
       <div>
-        <div class="hero-label">KEI → MIZ / 精算額</div>
+        <div class="hero-label">KeiからMizへ渡す精算額</div>
         <div class="hero-value" id="heroSettle">—</div>
         <div class="hero-rule"></div>
         <div class="hero-stat"><span>家計総額</span><b id="heroTotal">—</b></div>
@@ -813,9 +985,9 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
   </section>
 
   <div class="section-heading overview-heading">
-    <span class="section-number">01 / CLOSE</span>
-    <h2>今月を締める</h2>
-    <p>変動した項目だけ入力。途中なら下書き、確認できたら確定保存。PDFも同じ月にまとめられます。</p>
+    <span class="section-number">壱・記帳</span>
+    <h2>月次入力帳</h2>
+    <p>変動した項目だけ記帳。途中は下書きとして残り、確定後に月報へ加わります。領収書PDFも同じ月に保管できます。</p>
   </div>
 
   <!-- METRICS -->
@@ -853,17 +1025,17 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
   </div>
 
   <div class="section-heading trends-heading">
-    <span class="section-number">02 / READ</span>
-    <h2>暮らしの脈を読む</h2>
-    <p>確定した月だけで比較。上がった理由と、次に見直す場所を数字の流れから見つけます。</p>
+    <span class="section-number">弐・月報</span>
+    <h2>家計の推移</h2>
+    <p>確定した月だけを比較。支出と精算額の変化を、帳簿の流れとして振り返ります。</p>
   </div>
 
   <!-- MAIN CHART: 合計推移 -->
   <div class="card chart-main">
     <div class="card-title">合計支出 推移（4人）</div>
     <div class="legend-row">
-      <span><span class="legend-dot" style="background:#c7ff36"></span>合計支出</span>
-      <span><span class="legend-dot" style="background:#f05b43"></span>Kei→Miz精算</span>
+      <span><span class="legend-dot" style="background:#2c6882"></span>合計支出</span>
+      <span><span class="legend-dot" style="background:#c74336"></span>Kei→Miz精算</span>
     </div>
     <div class="chart-wrap h240">
       <canvas id="chartMain" role="img" aria-label="合計支出とKei精算額の月次推移"></canvas>
@@ -1080,8 +1252,8 @@ header.site-header #headerDate { color: rgba(255,255,255,.55); font: 400 .62rem 
   </div>
 
   <section class="closing-strip">
-    <div><span>NEXT MONTH, LESS FRICTION.</span><h2>来月の自分に、数字を残す。</h2></div>
-    <button type="button" class="hero-cta js-jump-edit">入力へ戻る ↑</button>
+    <div><span>成澤家 家計簿・2026年</span><h2>今月の記帳は、ここまで。</h2></div>
+    <button type="button" class="hero-cta js-jump-edit">月次帳へ戻る</button>
   </section>
 
 </div>
@@ -1514,15 +1686,15 @@ function chartDefaults() {
   return {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: {
-      backgroundColor: '#c7ff36', borderColor: '#151812', borderWidth: 1,
-      titleColor: '#51564d', bodyColor: '#151812', padding: 12,
+      backgroundColor: '#c74336', borderColor: '#8d2e25', borderWidth: 1,
+      titleColor: 'rgba(255,255,255,.7)', bodyColor: '#ffffff', padding: 12,
       titleFont: { family: 'IBM Plex Mono', size: 10 },
       bodyFont: { family: 'IBM Plex Mono', size: 11, weight: '500' },
       callbacks: { label: ctx => ` ¥${fmt(ctx.raw)}` }
     }},
     scales: {
-      x: { ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: 'rgba(255,255,255,.48)', maxRotation: 0, autoSkip: true }, grid: { display: false }, border: { color: 'rgba(255,255,255,.16)' } },
-      y: { ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: 'rgba(255,255,255,.48)', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(255,255,255,.08)' }, border: { display: false } }
+      x: { ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: '#777166', maxRotation: 0, autoSkip: true }, grid: { display: false }, border: { color: 'rgba(48,45,39,.2)' } },
+      y: { ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: '#777166', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(44,104,130,.11)' }, border: { display: false } }
     }
   };
 }
@@ -1548,8 +1720,8 @@ function initCharts() {
   };
 
   mkLine('chartMain', [
-    { label: '合計支出', data: data.map(totalExpense), borderColor: '#c7ff36', backgroundColor: 'rgba(199,255,54,0.10)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#c7ff36', borderWidth: 2.5 },
-    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#f05b43', backgroundColor: 'transparent', fill: false, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#f05b43', borderWidth: 2, borderDash: [5,5] },
+    { label: '合計支出', data: data.map(totalExpense), borderColor: '#2c6882', backgroundColor: 'rgba(44,104,130,0.09)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#2c6882', borderWidth: 2.5 },
+    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#c74336', backgroundColor: 'transparent', fill: false, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#c74336', borderWidth: 2, borderDash: [5,5] },
   ]);
 
   if (charts['chartUtil']) charts['chartUtil'].destroy();
@@ -1566,8 +1738,8 @@ function initCharts() {
     options: {
       ...chartDefaults(),
       scales: {
-        x: { stacked: true, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: 'rgba(255,255,255,.48)', maxRotation: 0, autoSkip: true }, grid: { display: false }, border: { color: 'rgba(255,255,255,.16)' } },
-        y: { stacked: true, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: 'rgba(255,255,255,.48)', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(255,255,255,.08)' }, border: { display: false } }
+        x: { stacked: true, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: '#777166', maxRotation: 0, autoSkip: true }, grid: { display: false }, border: { color: 'rgba(48,45,39,.2)' } },
+        y: { stacked: true, ticks: { font: { family: 'IBM Plex Mono', size: 9 }, color: '#777166', callback: v => `¥${(v/1000).toFixed(0)}k` }, grid: { color: 'rgba(44,104,130,.11)' }, border: { display: false } }
       }
     }
   });
@@ -1577,7 +1749,7 @@ function initCharts() {
   ]);
 
   mkLine('chartSettle', [
-    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#f05b43', backgroundColor: 'rgba(240,91,67,0.12)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#f05b43', borderWidth: 2.5 },
+    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#c74336', backgroundColor: 'rgba(199,67,54,0.10)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#c74336', borderWidth: 2.5 },
   ]);
 }
 
@@ -1634,7 +1806,9 @@ function updateMetrics() {
   const prevSettle = prev ? calcSettle(prev).settle : null;
   document.getElementById('m-settle').innerHTML = `${fmtSettle(settle)}<span></span>`;
   document.getElementById('m-settle-month').textContent = `最新確定月 ${fmtLabel(latest)}`;
-  document.getElementById('heroLatestMonth').textContent = `${String(latest.m).padStart(2,'0')} / ${latest.y}`;
+  document.getElementById('heroLatestMonth').textContent = `${latest.y}年${String(latest.m).padStart(2,'0')}月`;
+  const monthKanji = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+  document.getElementById('hero-title').innerHTML = `<span>${latest.y}年</span><em>${monthKanji[latest.m - 1]}月</em> 家計精算票`;
   document.getElementById('heroSettle').textContent = fmtSettle(settle);
   document.getElementById('heroTotal').textContent = `¥${fmt(latestTotal)}`;
   if (prevSettle !== null) {
@@ -1748,17 +1922,17 @@ function updateInputMonthLabel() {
   const year = document.getElementById('editYear').value;
   const month = document.getElementById('editMonth').value;
   const button = document.getElementById('jumpToEdit');
-  if (button) button.textContent = `${month}月を締める ↘`;
+  if (button) button.textContent = `${month}月を記帳する`;
   document.querySelector('.edit-header h2').textContent = `月次入力 ${year}/${String(month).padStart(2,'0')}`;
 }
 
 function updateHeroInputStatus(found, year, month) {
   const el = document.getElementById('heroInputStatus');
   if (!el) return;
-  const label = `${String(month).padStart(2,'0')} / ${year}`;
-  if (!found) el.textContent = `${label} — NEW MONTH / 未保存`;
-  else if (found.status === 'draft') el.textContent = `${label} — DRAFT / 入力受付中`;
-  else el.textContent = `${label} — CLOSED / 確定済み`;
+  const label = `${year}年${month}月`;
+  if (!found) el.textContent = `${label}・未記帳`;
+  else if (found.status === 'draft') el.textContent = `${label}・下書き保存中`;
+  else el.textContent = `${label}・確定済み`;
 }
 
 function persistDraft(key = currentEditKey || selectedMonthKey(), data = readFormData('draft'), updateUi = true) {
@@ -1992,8 +2166,8 @@ function initDonut() {
   const d = all[all.length - 1];
 
   const fixed = [
-    { label: '家賃', val: d.rent, color: '#c7ff36' },
-    { label: 'ネット', val: d.net, color: '#f3f0e6' },
+    { label: '家賃', val: d.rent, color: '#c74336' },
+    { label: 'ネット', val: d.net, color: '#2c6882' },
     { label: 'Netflix', val: d.netflix, color: '#e50914' },
     { label: 'NHK', val: d.nhk, color: '#4a90d9' },
     { label: 'YouTube', val: d.youtube, color: '#ff0000' },
@@ -2013,7 +2187,7 @@ function initDonut() {
     { label: '水道', val: d.water, color: '#4abf8d' },
     { label: '雑費', val: d.food, color: '#f0a14a' },
     { label: '父母食費', val: d.food_par, color: '#ffd37a' },
-    { label: '臨時支出', val: rinjiTotal, color: '#f05b43' },
+    { label: '臨時支出', val: rinjiTotal, color: '#c74336' },
   ].filter(i => i.val > 0);
 
   const totalFixed = fixed.reduce((s,i) => s+i.val, 0);
@@ -2029,7 +2203,7 @@ function initDonut() {
     type: 'doughnut',
     data: {
       labels: items.map(i => i.label),
-      datasets: [{ data: items.map(i => i.val), backgroundColor: items.map(i => i.color), borderWidth: 3, borderColor: '#151812', hoverOffset: 6 }]
+      datasets: [{ data: items.map(i => i.val), backgroundColor: items.map(i => i.color), borderWidth: 3, borderColor: '#fffdf7', hoverOffset: 6 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -2037,8 +2211,8 @@ function initDonut() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#c7ff36', borderColor: '#151812', borderWidth: 1,
-          titleColor: '#51564d', bodyColor: '#151812',
+          backgroundColor: '#c74336', borderColor: '#8d2e25', borderWidth: 1,
+          titleColor: 'rgba(255,255,255,.7)', bodyColor: '#ffffff',
           titleFont: { family: 'IBM Plex Mono', size: 10 }, bodyFont: { family: 'IBM Plex Mono', size: 11, weight: '500' },
           callbacks: { label: ctx => ` ¥${fmt(ctx.raw)} (${totalFixed + totalVar ? Math.round(ctx.raw/(totalFixed+totalVar)*100) : 0}%)` }
         }
