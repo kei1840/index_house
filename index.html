@@ -1297,17 +1297,21 @@ function setupEditDropdowns() {
   const yEl = document.getElementById('editYear');
   const mEl = document.getElementById('editMonth');
   const all = getAll();
-  const latest = all[all.length - 1];
+  // 起動時は「直前に締まった月」を入力対象にする（2026年8月なら2026年7月）。
+  const now = new Date();
+  const defaultEditDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const defaultEditYear = defaultEditDate.getFullYear();
+  const defaultEditMonth = defaultEditDate.getMonth() + 1;
   const currentYear = new Date().getFullYear();
-  const years = [...new Set([...all.map(d => d.y), currentYear, currentYear + 1])];
+  const years = [...new Set([...all.map(d => d.y), defaultEditYear, currentYear, currentYear + 1])];
   years.sort((a,b) => b-a).forEach(y => {
     const o = document.createElement('option'); o.value = y; o.textContent = `${y}年`;
-    if (y === latest.y) o.selected = true;
+    if (y === defaultEditYear) o.selected = true;
     yEl.appendChild(o);
   });
   for (let m = 1; m <= 12; m++) {
     const o = document.createElement('option'); o.value = m; o.textContent = `${m}月`;
-    if (m === latest.m) o.selected = true;
+    if (m === defaultEditMonth) o.selected = true;
     mEl.appendChild(o);
   }
   yEl.addEventListener('change', loadEdit);
