@@ -6,7 +6,7 @@
 <title>家計ダッシュボード</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Shippori+Mincho:wght@500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 #lock {
   position: fixed; inset: 0; background: #f4f4f0;
@@ -928,6 +928,173 @@ header.site-header #headerDate { color: var(--muted); }
   .hero-foot div { min-width: 0; flex: 1; }
   .section-heading { grid-template-columns: 52px 1fr; }
 }
+
+/* OpenAI-inspired corporate system — original household implementation */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface2: #f2f2f2;
+  --border: rgba(13,13,13,.16);
+  --text: #0d0d0d;
+  --muted: #666666;
+  --accent-elec: #0d0d0d;
+  --accent-water: #10a37f;
+  --accent-food: #c58a31;
+  --accent-kei: #10a37f;
+  --accent-settle: #10a37f;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Inter', 'Noto Sans JP', sans-serif;
+  --display: 'Inter', 'Noto Sans JP', sans-serif;
+}
+body { background: #fff; background-image: none; color: var(--text); font-family: var(--sans); }
+header.site-header {
+  min-height: 64px; padding: 0 2rem; color: var(--text); background: rgba(255,255,255,.96);
+  border: 0; border-bottom: 1px solid var(--text); position: sticky; top: 0; z-index: 50;
+}
+.brand { gap: .75rem; }
+.brand-mark {
+  width: 30px; height: 30px; border: 0; border-radius: 50%; color: #fff; background: #0d0d0d;
+  font: 600 .72rem var(--display); writing-mode: horizontal-tb;
+}
+.brand-name { font: 600 .92rem var(--display); letter-spacing: -.025em; }
+.brand-sub { color: var(--muted); font: 400 .55rem var(--mono); letter-spacing: .04em; }
+header.site-header #headerDate { color: var(--muted); }
+.header-action {
+  padding: .56rem 1rem; color: #fff; background: #0d0d0d; border: 1px solid #0d0d0d;
+  border-radius: 999px; box-shadow: none; font-family: var(--sans);
+}
+.header-action:hover { transform: none; color: #0d0d0d; background: #fff; box-shadow: none; }
+.storage-notice {
+  padding: .55rem 2rem; color: var(--muted); background: #f7f7f7; border-bottom: 1px solid #e5e5e5;
+}
+.storage-notice strong { color: var(--text); font-family: var(--mono); letter-spacing: .01em; }
+.dashboard { width: 100%; max-width: 1600px; padding: 0 2rem 4rem; gap: 1.25rem; }
+
+.hero {
+  min-height: 650px; margin-top: 0; grid-template-columns: minmax(0,1.45fr) minmax(400px,.55fr);
+  color: var(--text); background: #fff; border: 0; border-bottom: 1px solid var(--text);
+  border-radius: 0; box-shadow: none;
+}
+.hero::before { display: none; }
+.hero-copy { padding: clamp(4rem,8vw,8.5rem) 2rem clamp(3rem,6vw,6rem) 0; }
+.hero-eyebrow {
+  padding: 0; color: var(--muted); background: transparent; border: 0;
+  font: 400 .72rem var(--mono); letter-spacing: 0;
+}
+.hero h1 {
+  max-width: 1000px; margin: 2.5rem 0 2rem; color: var(--text);
+  font: 500 clamp(4rem,8vw,9rem)/.92 var(--display); letter-spacing: -.075em;
+}
+.hero h1 span { margin-bottom: 1.25rem; color: var(--muted); font: 400 .09em var(--mono); letter-spacing: 0; }
+.hero h1 em { color: var(--text); }
+.hero-lead { max-width: 560px; color: #4d4d4d; font: 400 1rem/1.65 var(--sans); }
+.hero-actions { margin-top: 2.25rem; }
+.hero-cta {
+  padding: .78rem 1.15rem; color: #fff; background: #0d0d0d; border: 1px solid #0d0d0d;
+  border-radius: 999px; font: 500 .78rem var(--sans); transition: background .15s,color .15s;
+}
+.hero-cta:hover { color: #0d0d0d; background: #fff; transform: none; }
+.hero-caption { color: var(--muted); }
+.hero-foot { width: min(620px,100%); margin-top: auto; border-top: 1px solid #d8d8d8; }
+.hero-foot div { border-color: #d8d8d8; }
+.hero-foot b { color: var(--text); font: 500 1.25rem var(--display); }
+.hero-foot span { color: var(--muted); font-family: var(--sans); }
+.hero-settlement {
+  min-height: 520px; margin: 2rem 0 2rem 1rem; padding: 2.25rem; color: var(--text); background: #f2f2f2;
+  border: 0; border-radius: 0; box-shadow: none;
+}
+.hero-settlement::after {
+  content: '¥'; right: -1rem; bottom: -2.5rem; color: rgba(13,13,13,.055);
+  font: 500 14rem/.9 var(--display); transform: none;
+}
+.hero-index { color: var(--muted); font: 400 .65rem var(--mono); letter-spacing: 0; }
+.hero-month { font: 500 clamp(2.5rem,4vw,4.8rem)/1 var(--display); letter-spacing: -.06em; }
+.hero-label { font: 400 .72rem var(--sans); }
+.hero-value { font: 500 clamp(2.8rem,5vw,5.4rem)/.95 var(--display); letter-spacing: -.07em; }
+.hero-rule { border-top: 1px solid #c9c9c9; }
+.hero-status { width: fit-content; border: 1px solid #bdbdbd; border-radius: 999px; font-size: .65rem; }
+
+.section-heading {
+  grid-template-columns: 80px minmax(0,1fr) minmax(240px,.4fr); padding: 6rem 0 1.25rem;
+  border-top: 0; border-bottom: 1px solid var(--text);
+}
+.section-number { color: var(--muted); font: 400 .68rem var(--mono); }
+.section-heading h2 { font: 500 clamp(2rem,3.2vw,3.8rem)/1 var(--display); letter-spacing: -.055em; }
+.section-heading p { color: var(--muted); font: 400 .8rem/1.6 var(--sans); }
+
+.metrics-row { gap: 0; border: 0; border-bottom: 1px solid var(--text); background: #fff; }
+.metric-card { min-height: 175px; padding: 1.4rem 1rem; background: #fff; border-color: #d8d8d8; }
+.metric-card:first-child { padding-left: 0; }
+.metric-card.settle { color: var(--text); background: #fff; border-left: 1px solid var(--text); }
+.metric-card.settle .metric-value { color: var(--accent-settle); font-family: var(--display); }
+.metric-card.settle .metric-label, .metric-card.settle .metric-sub { color: var(--muted); }
+.metric-card.settle #m-settle-reason { color: var(--muted) !important; }
+.metric-label { color: var(--muted); font: 400 .62rem var(--mono); }
+.metric-value { font: 500 clamp(1.6rem,2.2vw,2.5rem)/1 var(--display); letter-spacing: -.055em; }
+
+.chart-main, .chart-util, .chart-food, .chart-settle, .chart-donut {
+  padding: 1.5rem 0; color: var(--text); background: #fff; border: 0; border-top: 1px solid var(--text);
+  box-shadow: none;
+}
+.chart-main .card-title, .chart-util .card-title, .chart-food .card-title,
+.chart-settle .card-title, .chart-donut .card-title { color: var(--text); font: 500 .7rem var(--sans); }
+.chart-main .legend-row, .chart-util .legend-row { color: var(--muted); }
+.chart-util, .chart-settle { padding-right: 1rem; }
+.chart-food, .chart-donut { padding-left: 1rem; border-left: 1px solid #d8d8d8; }
+.insights-card { padding: 1.5rem 0; background: #fff; border: 0; border-top: 1px solid var(--text); }
+.insight-item { padding: 1rem 0 1rem 1rem; background: #fff; border-radius: 0; border-left-width: 1px; border-top: 1px solid #e5e5e5; }
+.table-card { padding: 1.5rem 0; margin-top: 4rem; background: #fff; border: 0; border-top: 1px solid var(--text); }
+
+.closing-strip {
+  margin-top: 5rem; padding: clamp(3rem,6vw,6rem); color: #fff; background: #0d0d0d;
+  border: 0; align-items: center;
+}
+.closing-strip span { color: #a7a7a7; font-family: var(--mono); }
+.closing-strip h2 { color: #fff; font: 500 clamp(2.5rem,5vw,6rem)/.95 var(--display); letter-spacing: -.065em; }
+.closing-strip .hero-cta { color: #0d0d0d; background: #fff; border-color: #fff; }
+
+.input-heading { padding-top: 7rem; }
+.edit-panel {
+  padding: 1.5rem; background: #f7f7f7; border: 1px solid #0d0d0d; box-shadow: none;
+}
+.edit-header {
+  margin: -1.5rem -1.5rem 1.5rem; padding: 1rem 1.25rem; color: #fff; background: #0d0d0d;
+  border: 0; border-bottom: 1px solid #0d0d0d; top: 64px;
+}
+.edit-header h2 { color: #fff; font: 500 .78rem var(--sans); letter-spacing: 0; }
+.month-select-row select { background: #fff; border-color: #fff; border-radius: 4px; }
+.completion-state, .save-state { color: #fff; border-color: #666; background: transparent; }
+.save-state.complete { color: #0d0d0d; background: #fff; }
+.save-btn { color: #0d0d0d; background: #fff; border: 1px solid #fff; border-radius: 999px; }
+.btn-secondary { color: #fff !important; border-color: #666 !important; }
+.advanced-tools summary { color: #bdbdbd; }
+.edit-col-title { color: var(--text); border-color: var(--text); }
+.field label { color: #4d4d4d; }
+.field input, .field textarea { background: #fff; border: 1px solid #c7c7c7; border-radius: 4px; }
+.field input:focus, .field textarea:focus { border-color: #0d0d0d; box-shadow: inset 3px 0 0 #10a37f; }
+.adder-btn, #rinji-add-btn { background: #0d0d0d !important; border-color: #0d0d0d !important; border-radius: 999px !important; }
+.settle-preview { color: #fff; background: #0d0d0d; border-color: #0d0d0d; }
+.settle-item label, .food-breakdown, .settle-preview [style*="color:var(--muted)"] { color: #9f9f9f !important; }
+.settle-highlight { color: #6ee7c3; }
+.draft-badge { color: #fff; background: #0d0d0d; border-radius: 999px; }
+
+@media (max-width: 760px) {
+  header.site-header { min-height: 58px; padding: 0 1rem; }
+  .brand-mark { width: 28px; height: 28px; }
+  .storage-notice { padding: .5rem 1rem; }
+  .dashboard { padding: 0 1rem 3rem; }
+  .hero { min-height: 0; grid-template-columns: 1fr; }
+  .hero-copy { padding: 4rem 0 2rem; }
+  .hero h1 { font-size: clamp(3.6rem,18vw,5.8rem); }
+  .hero-settlement { min-height: 360px; margin: 0 0 2rem; padding: 1.5rem; }
+  .section-heading { grid-template-columns: 44px 1fr; padding-top: 4.5rem; }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  .metric-card:first-child { padding-left: 1rem; }
+  .chart-util, .chart-settle, .chart-food, .chart-donut { padding-left: 0; padding-right: 0; border-left: 0; }
+  .closing-strip { margin-left: -1rem; margin-right: -1rem; }
+  .edit-panel { padding: 1rem; }
+  .edit-header { margin: -1rem -1rem 1rem; top: 58px; }
+}
 </style>
 </head>
 <body>
@@ -942,40 +1109,40 @@ header.site-header #headerDate { color: var(--muted); }
 
 <header class="site-header">
   <div class="brand">
-    <span class="brand-mark">家計</span>
-    <span><span class="brand-name">成澤家の家計簿</span><span class="brand-sub">KEI・MIZ・父母　四人分</span></span>
+    <span class="brand-mark">K</span>
+    <span><span class="brand-name">Household</span><span class="brand-sub">Kei / Miz</span></span>
   </div>
   <div class="nav-meta">
     <span id="headerDate"></span>
-    <button type="button" class="header-action" id="jumpToEdit">7月を記帳する</button>
+    <button type="button" class="header-action" id="jumpToEdit">月次入力</button>
   </div>
 </header>
-<div class="storage-notice"><strong>保存について</strong><span>入力途中はこのブラウザへ自動保存。「確定して反映」で月報とグラフを更新します。</span></div>
+<div class="storage-notice"><strong>Local save</strong><span>入力途中はこのブラウザへ自動保存。「確定して反映」で集計とグラフを更新します。</span></div>
 
 <div class="dashboard">
 
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <span class="hero-eyebrow">第39号・四人家計</span>
-      <h1 id="hero-title"><span>2026年</span><em>七月</em> 家計精算票</h1>
-      <p class="hero-lead">KeiとMizの支払い、父母分、雑費の内訳まで。七月の家計を一枚の帳面に確定しました。</p>
+      <span class="hero-eyebrow">Household finance, 2026</span>
+      <h1 id="hero-title"><span>2026年7月</span>家計を、<br><em>ひらく。</em></h1>
+      <p class="hero-lead">支払い、家族分、ふたりの精算をひとつの場所へ。毎月の数字を、入力しやすく、振り返りやすく。</p>
       <div class="hero-actions">
-        <button type="button" class="hero-cta js-jump-edit">月次帳を開く</button>
-        <span class="hero-caption">下書き自動保存・領収PDF添付可</span>
+        <button type="button" class="hero-cta js-jump-edit">今月を入力する</button>
+        <span class="hero-caption">下書き自動保存・PDF添付対応</span>
       </div>
       <div class="hero-foot">
-        <div><b>39</b><span>記録済み月数</span></div>
-        <div><b>4人</b><span>家計人数</span></div>
-        <div><b>月1回</b><span>締め日</span></div>
+        <div><b>39</b><span>記録月</span></div>
+        <div><b>4人</b><span>対象人数</span></div>
+        <div><b>2023—26</b><span>データ期間</span></div>
       </div>
     </div>
     <aside class="hero-settlement" aria-label="最新確定月の概要">
       <div>
-        <span class="hero-index">最新確定月</span>
+        <span class="hero-index">Latest close</span>
         <div class="hero-month" id="heroLatestMonth">—</div>
       </div>
       <div>
-        <div class="hero-label">KeiからMizへ渡す精算額</div>
+        <div class="hero-label">Kei → Miz　精算額</div>
         <div class="hero-value" id="heroSettle">—</div>
         <div class="hero-rule"></div>
         <div class="hero-stat"><span>家計総額</span><b id="heroTotal">—</b></div>
@@ -985,9 +1152,9 @@ header.site-header #headerDate { color: var(--muted); }
   </section>
 
   <div class="section-heading overview-heading">
-    <span class="section-number">壱・記帳</span>
-    <h2>月次入力帳</h2>
-    <p>変動した項目だけ記帳。途中は下書きとして残り、確定後に月報へ加わります。領収書PDFも同じ月に保管できます。</p>
+    <span class="section-number">01</span>
+    <h2>Overview</h2>
+    <p>最新確定月の支出と精算。平均値、前月比、変化の理由を一つのビューで確認します。</p>
   </div>
 
   <!-- METRICS -->
@@ -1025,17 +1192,17 @@ header.site-header #headerDate { color: var(--muted); }
   </div>
 
   <div class="section-heading trends-heading">
-    <span class="section-number">弐・月報</span>
-    <h2>家計の推移</h2>
-    <p>確定した月だけを比較。支出と精算額の変化を、帳簿の流れとして振り返ります。</p>
+    <span class="section-number">02</span>
+    <h2>Trends</h2>
+    <p>確定した月だけを比較。支出と精算額の変化を、18か月の流れとして振り返ります。</p>
   </div>
 
   <!-- MAIN CHART: 合計推移 -->
   <div class="card chart-main">
     <div class="card-title">合計支出 推移（4人）</div>
     <div class="legend-row">
-      <span><span class="legend-dot" style="background:#2c6882"></span>合計支出</span>
-      <span><span class="legend-dot" style="background:#c74336"></span>Kei→Miz精算</span>
+      <span><span class="legend-dot" style="background:#0d0d0d"></span>合計支出</span>
+      <span><span class="legend-dot" style="background:#10a37f"></span>Kei→Miz精算</span>
     </div>
     <div class="chart-wrap h240">
       <canvas id="chartMain" role="img" aria-label="合計支出とKei精算額の月次推移"></canvas>
@@ -1046,9 +1213,9 @@ header.site-header #headerDate { color: var(--muted); }
   <div class="card chart-util">
     <div class="card-title">水道・電気ガス・雑費 推移</div>
     <div class="legend-row">
-      <span><span class="legend-dot" style="background:#4d79ee"></span>電気ガス</span>
-      <span><span class="legend-dot" style="background:#4abf8d"></span>水道</span>
-      <span><span class="legend-dot" style="background:#f0a14a"></span>雑費</span>
+      <span><span class="legend-dot" style="background:#686868"></span>電気ガス</span>
+      <span><span class="legend-dot" style="background:#10a37f"></span>水道</span>
+      <span><span class="legend-dot" style="background:#c58a31"></span>雑費</span>
     </div>
     <div class="chart-wrap h240">
       <canvas id="chartUtil" role="img" aria-label="水道・電気ガス・雑費の月次推移"></canvas>
@@ -1089,6 +1256,11 @@ header.site-header #headerDate { color: var(--muted); }
   </div>
 
   <!-- EDIT PANEL -->
+  <div class="section-heading input-heading">
+    <span class="section-number">03</span>
+    <h2>Monthly input</h2>
+    <p>ページの閲覧後に、そのまま次の月を入力。下書きは端末に残り、確定後にすべての集計へ反映されます。</p>
+  </div>
   <div class="edit-panel">
     <div class="edit-header">
       <h2>月次入力</h2>
@@ -1252,8 +1424,8 @@ header.site-header #headerDate { color: var(--muted); }
   </div>
 
   <section class="closing-strip">
-    <div><span>成澤家 家計簿・2026年</span><h2>今月の記帳は、ここまで。</h2></div>
-    <button type="button" class="hero-cta js-jump-edit">月次帳へ戻る</button>
+    <div><span>Household / 2023—2026</span><h2>数字から、暮らしを見渡す。</h2></div>
+    <button type="button" class="hero-cta js-jump-edit">月次入力へ</button>
   </section>
 
 </div>
@@ -1686,8 +1858,8 @@ function chartDefaults() {
   return {
     responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: {
-      backgroundColor: '#c74336', borderColor: '#8d2e25', borderWidth: 1,
-      titleColor: 'rgba(255,255,255,.7)', bodyColor: '#ffffff', padding: 12,
+      backgroundColor: '#0d0d0d', borderColor: '#0d0d0d', borderWidth: 1,
+      titleColor: 'rgba(255,255,255,.65)', bodyColor: '#ffffff', padding: 12,
       titleFont: { family: 'IBM Plex Mono', size: 10 },
       bodyFont: { family: 'IBM Plex Mono', size: 11, weight: '500' },
       callbacks: { label: ctx => ` ¥${fmt(ctx.raw)}` }
@@ -1720,8 +1892,8 @@ function initCharts() {
   };
 
   mkLine('chartMain', [
-    { label: '合計支出', data: data.map(totalExpense), borderColor: '#2c6882', backgroundColor: 'rgba(44,104,130,0.09)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#2c6882', borderWidth: 2.5 },
-    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#c74336', backgroundColor: 'transparent', fill: false, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#c74336', borderWidth: 2, borderDash: [5,5] },
+    { label: '合計支出', data: data.map(totalExpense), borderColor: '#0d0d0d', backgroundColor: 'rgba(13,13,13,0.05)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#0d0d0d', borderWidth: 2.5 },
+    { label: 'Kei→Miz', data: data.map(d => calcSettle(d).settle), borderColor: '#10a37f', backgroundColor: 'transparent', fill: false, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#10a37f', borderWidth: 2, borderDash: [5,5] },
   ]);
 
   if (charts['chartUtil']) charts['chartUtil'].destroy();
@@ -1730,9 +1902,9 @@ function initCharts() {
     data: {
       labels,
       datasets: [
-        { label: '電気ガス', data: data.map(d => d.elec+(d.gas||0)), backgroundColor: '#4d79ee', borderWidth: 0, borderRadius: 3, borderSkipped: false },
-        { label: '水道', data: data.map(d => d.water), backgroundColor: '#4abf8d', borderWidth: 0, borderRadius: 3, borderSkipped: false },
-        { label: '雑費', data: data.map(d => d.food), backgroundColor: '#f0a14a', borderWidth: 0, borderRadius: 3, borderSkipped: false },
+        { label: '電気ガス', data: data.map(d => d.elec+(d.gas||0)), backgroundColor: '#686868', borderWidth: 0, borderRadius: 3, borderSkipped: false },
+        { label: '水道', data: data.map(d => d.water), backgroundColor: '#10a37f', borderWidth: 0, borderRadius: 3, borderSkipped: false },
+        { label: '雑費', data: data.map(d => d.food), backgroundColor: '#c58a31', borderWidth: 0, borderRadius: 3, borderSkipped: false },
       ]
     },
     options: {
@@ -1745,11 +1917,11 @@ function initCharts() {
   });
 
   mkLine('chartFood', [
-    { label: '雑費', data: data.map(d => d.food), borderColor: '#f0a14a', backgroundColor: 'rgba(240,161,74,0.12)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#f0a14a', borderWidth: 2.5 },
+    { label: '雑費', data: data.map(d => d.food), borderColor: '#c58a31', backgroundColor: 'rgba(197,138,49,0.09)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#c58a31', borderWidth: 2.5 },
   ]);
 
   mkLine('chartSettle', [
-    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#c74336', backgroundColor: 'rgba(199,67,54,0.10)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#c74336', borderWidth: 2.5 },
+    { label: '精算額', data: data.map(d => calcSettle(d).settle), borderColor: '#10a37f', backgroundColor: 'rgba(16,163,127,0.08)', fill: true, tension: 0.32, pointRadius: 0, pointHoverRadius: 5, pointBackgroundColor: '#10a37f', borderWidth: 2.5 },
   ]);
 }
 
@@ -1807,8 +1979,7 @@ function updateMetrics() {
   document.getElementById('m-settle').innerHTML = `${fmtSettle(settle)}<span></span>`;
   document.getElementById('m-settle-month').textContent = `最新確定月 ${fmtLabel(latest)}`;
   document.getElementById('heroLatestMonth').textContent = `${latest.y}年${String(latest.m).padStart(2,'0')}月`;
-  const monthKanji = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
-  document.getElementById('hero-title').innerHTML = `<span>${latest.y}年</span><em>${monthKanji[latest.m - 1]}月</em> 家計精算票`;
+  document.getElementById('hero-title').innerHTML = `<span>${latest.y}年${latest.m}月</span>家計を、<br><em>ひらく。</em>`;
   document.getElementById('heroSettle').textContent = fmtSettle(settle);
   document.getElementById('heroTotal').textContent = `¥${fmt(latestTotal)}`;
   if (prevSettle !== null) {
@@ -1922,7 +2093,7 @@ function updateInputMonthLabel() {
   const year = document.getElementById('editYear').value;
   const month = document.getElementById('editMonth').value;
   const button = document.getElementById('jumpToEdit');
-  if (button) button.textContent = `${month}月を記帳する`;
+  if (button) button.textContent = `${month}月を入力`;
   document.querySelector('.edit-header h2').textContent = `月次入力 ${year}/${String(month).padStart(2,'0')}`;
 }
 
@@ -2166,8 +2337,8 @@ function initDonut() {
   const d = all[all.length - 1];
 
   const fixed = [
-    { label: '家賃', val: d.rent, color: '#c74336' },
-    { label: 'ネット', val: d.net, color: '#2c6882' },
+    { label: '家賃', val: d.rent, color: '#0d0d0d' },
+    { label: 'ネット', val: d.net, color: '#777777' },
     { label: 'Netflix', val: d.netflix, color: '#e50914' },
     { label: 'NHK', val: d.nhk, color: '#4a90d9' },
     { label: 'YouTube', val: d.youtube, color: '#ff0000' },
@@ -2182,12 +2353,12 @@ function initDonut() {
   const rinjiTotal = dRinjiItems.reduce((s,it) => s+(it.val||0), 0);
 
   const variable = [
-    { label: '電気代', val: d.elec, color: '#4d79ee' },
-    { label: 'ガス代', val: d.gas||0, color: '#78a0ff' },
-    { label: '水道', val: d.water, color: '#4abf8d' },
-    { label: '雑費', val: d.food, color: '#f0a14a' },
-    { label: '父母食費', val: d.food_par, color: '#ffd37a' },
-    { label: '臨時支出', val: rinjiTotal, color: '#c74336' },
+    { label: '電気代', val: d.elec, color: '#4d4d4d' },
+    { label: 'ガス代', val: d.gas||0, color: '#8a8a8a' },
+    { label: '水道', val: d.water, color: '#10a37f' },
+    { label: '雑費', val: d.food, color: '#c58a31' },
+    { label: '父母食費', val: d.food_par, color: '#d9b06e' },
+    { label: '臨時支出', val: rinjiTotal, color: '#10a37f' },
   ].filter(i => i.val > 0);
 
   const totalFixed = fixed.reduce((s,i) => s+i.val, 0);
@@ -2211,8 +2382,8 @@ function initDonut() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#c74336', borderColor: '#8d2e25', borderWidth: 1,
-          titleColor: 'rgba(255,255,255,.7)', bodyColor: '#ffffff',
+          backgroundColor: '#0d0d0d', borderColor: '#0d0d0d', borderWidth: 1,
+          titleColor: 'rgba(255,255,255,.65)', bodyColor: '#ffffff',
           titleFont: { family: 'IBM Plex Mono', size: 10 }, bodyFont: { family: 'IBM Plex Mono', size: 11, weight: '500' },
           callbacks: { label: ctx => ` ¥${fmt(ctx.raw)} (${totalFixed + totalVar ? Math.round(ctx.raw/(totalFixed+totalVar)*100) : 0}%)` }
         }
@@ -2670,9 +2841,10 @@ function setupAdders() {
 }
 
 function setupMonthlyWorkflow() {
-  const overview = document.querySelector('.overview-heading');
+  const dashboard = document.querySelector('.dashboard');
+  const inputHeading = document.querySelector('.input-heading');
   const editPanel = document.querySelector('.edit-panel');
-  if (overview && editPanel) overview.after(editPanel);
+  if (dashboard && inputHeading && editPanel) dashboard.append(inputHeading, editPanel);
   document.querySelectorAll('#jumpToEdit, .js-jump-edit').forEach(button => {
     button.addEventListener('click', () => editPanel?.scrollIntoView({ behavior:'smooth', block:'start' }));
   });
