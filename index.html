@@ -1095,6 +1095,32 @@ header.site-header #headerDate { color: var(--muted); }
   .edit-panel { padding: 1rem; }
   .edit-header { margin: -1rem -1rem 1rem; top: 58px; }
 }
+
+/* Balance pass: fewer headings, stronger hierarchy */
+.hero { min-height: 540px; grid-template-columns: minmax(0,1.3fr) minmax(390px,.7fr); }
+.hero-copy { padding-top: clamp(4rem,6vw,6.5rem); padding-bottom: clamp(3rem,5vw,5rem); }
+.hero h1 { max-width: 920px; margin-top: 0; font-weight: 700; font-size: clamp(3.8rem,7vw,7.5rem); }
+.hero h1 span { font-weight: 500; }
+.hero h1 em { display: block; font-style: normal; font-weight: 700; }
+.hero-settlement { min-height: 450px; }
+.metrics-row { margin-top: 4.5rem; }
+.section-heading { grid-template-columns: minmax(0,1fr) minmax(260px,.4fr); padding-top: 4.5rem; }
+.section-number { display: none; }
+.section-heading h2 { font-size: clamp(1.6rem,2.3vw,2.5rem); font-weight: 700; letter-spacing: -.045em; }
+.section-heading p { align-self: end; }
+.card-title, .chart-main .card-title, .chart-util .card-title, .chart-food .card-title,
+.chart-settle .card-title, .chart-donut .card-title { font-weight: 700; }
+.edit-header h2 { font-weight: 700; }
+.input-heading { padding-top: 6rem; }
+
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; min-height: 0; }
+  .hero h1 { font-size: clamp(3.1rem,15vw,5rem); }
+  .hero-settlement { min-height: 340px; }
+  .metrics-row { margin-top: 3rem; }
+  .section-heading { grid-template-columns: 1fr; gap: .65rem; padding-top: 3.5rem; }
+  .section-heading p { max-width: 34rem; }
+}
 </style>
 </head>
 <body>
@@ -1123,9 +1149,8 @@ header.site-header #headerDate { color: var(--muted); }
 
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <span class="hero-eyebrow">Household finance, 2026</span>
-      <h1 id="hero-title"><span>2026年7月</span>家計を、<br><em>ひらく。</em></h1>
-      <p class="hero-lead">支払い、家族分、ふたりの精算をひとつの場所へ。毎月の数字を、入力しやすく、振り返りやすく。</p>
+      <h1 id="hero-title"><span>Household finance</span><em>2026年7月の家計</em></h1>
+      <p class="hero-lead">支払い、家族分、ふたりの精算をひとつの場所で管理します。</p>
       <div class="hero-actions">
         <button type="button" class="hero-cta js-jump-edit">今月を入力する</button>
         <span class="hero-caption">下書き自動保存・PDF添付対応</span>
@@ -1150,12 +1175,6 @@ header.site-header #headerDate { color: var(--muted); }
       </div>
     </aside>
   </section>
-
-  <div class="section-heading overview-heading">
-    <span class="section-number">01</span>
-    <h2>Overview</h2>
-    <p>最新確定月の支出と精算。平均値、前月比、変化の理由を一つのビューで確認します。</p>
-  </div>
 
   <!-- METRICS -->
   <div class="metrics-row">
@@ -1192,8 +1211,8 @@ header.site-header #headerDate { color: var(--muted); }
   </div>
 
   <div class="section-heading trends-heading">
-    <span class="section-number">02</span>
-    <h2>Trends</h2>
+    <span class="section-number">01</span>
+    <h2>推移</h2>
     <p>確定した月だけを比較。支出と精算額の変化を、18か月の流れとして振り返ります。</p>
   </div>
 
@@ -1257,8 +1276,8 @@ header.site-header #headerDate { color: var(--muted); }
 
   <!-- EDIT PANEL -->
   <div class="section-heading input-heading">
-    <span class="section-number">03</span>
-    <h2>Monthly input</h2>
+    <span class="section-number">02</span>
+    <h2>月次入力</h2>
     <p>ページの閲覧後に、そのまま次の月を入力。下書きは端末に残り、確定後にすべての集計へ反映されます。</p>
   </div>
   <div class="edit-panel">
@@ -1422,11 +1441,6 @@ header.site-header #headerDate { color: var(--muted); }
     </table>
     </div>
   </div>
-
-  <section class="closing-strip">
-    <div><span>Household / 2023—2026</span><h2>数字から、暮らしを見渡す。</h2></div>
-    <button type="button" class="hero-cta js-jump-edit">月次入力へ</button>
-  </section>
 
 </div>
 
@@ -1979,7 +1993,7 @@ function updateMetrics() {
   document.getElementById('m-settle').innerHTML = `${fmtSettle(settle)}<span></span>`;
   document.getElementById('m-settle-month').textContent = `最新確定月 ${fmtLabel(latest)}`;
   document.getElementById('heroLatestMonth').textContent = `${latest.y}年${String(latest.m).padStart(2,'0')}月`;
-  document.getElementById('hero-title').innerHTML = `<span>${latest.y}年${latest.m}月</span>家計を、<br><em>ひらく。</em>`;
+  document.getElementById('hero-title').innerHTML = `<span>Household finance</span><em>${latest.y}年${latest.m}月の家計</em>`;
   document.getElementById('heroSettle').textContent = fmtSettle(settle);
   document.getElementById('heroTotal').textContent = `¥${fmt(latestTotal)}`;
   if (prevSettle !== null) {
